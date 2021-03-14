@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     if args.command=='clean':
         log(args, 'start cleaning')
-        for dirname in ['release/img', 'temp/img_rec', 'temp/img_exported', 'temp/img_exported_svg', 'temp/img_icons']:
+        for dirname in ['temp/img_all', 'temp/img_rec', 'temp/img_exported', 'temp/img_exported_svg', 'temp/img_icons']: # 'release/img', 
             p = args.projectdir / dirname
             if p.exists():
                 shutil.rmtree(p)
@@ -122,19 +122,20 @@ if __name__ == '__main__':
         convert.convert_mmd(args)
         log(args, 'done mermaid')
 
-    if (args.command=='publish') or (args.command=='all'):
-        log(args, 'start publish')
-        # publish images to release dir
-        imgspath = args.projectdir / 'release' / 'img'
-        imgspath.mkdir(parents=True, exist_ok=True)
-        # copy png images from src  
-        # copy exported images
-        convert.mycopy(args.projectdir / 'temp' / 'img_exported', imgspath, args)
-        # overwrite them with images with icons
-        convert.mycopy(args.projectdir / 'temp' / 'img_icons', imgspath, args)
-        # copy areas images
-        convert.mycopy(args.projectdir / 'temp' / 'img_areas', imgspath, args)
-        log(args, 'done publish')
+    # if (args.command=='publish') or (args.command=='all'):
+    log(args, 'start merging images')
+    # publish images to release dir
+    # imgspath = args.projectdir / 'release' / 'img'
+    imgspath = args.projectdir / 'temp' / 'img_all'
+    imgspath.mkdir(parents=True, exist_ok=True)
+    # copy png images from src  
+    # copy exported images
+    convert.mycopy(args.projectdir / 'temp' / 'img_exported', imgspath, args)
+    # overwrite them with images with icons
+    convert.mycopy(args.projectdir / 'temp' / 'img_icons', imgspath, args)
+    # copy areas images
+    convert.mycopy(args.projectdir / 'temp' / 'img_areas', imgspath, args)
+    log(args, 'done merginf images')
 
     if (args.command=='align'):
         log(args, 'start align')

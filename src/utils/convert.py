@@ -57,6 +57,7 @@ def convert_svg(args):
 
 def convert_uml(args):
     # convert uxf files to png files
+    global movefiles
     movefiles = []
     __img_walk(args, 
         args.projectdir / 'src_doc' / 'img',
