@@ -18,6 +18,16 @@ def __add_project(args):
         args.projectdir = Path.cwd().parent
     else:
         args.projectdir = Path(args.projectdir)
+    args.sourcedir = args.projectdir / 'src_doc' / 'img'
+    args.destdir = args.projectdir / 'temp'
+    args.alldir = args.destdir / 'img_all'
+    args.svgdir = args.destdir / 'img_exported_svg'
+    args.exporteddir = args.destdir / 'img_exported'
+    args.iconsdir = args.destdir / 'img_icons'
+    args.areasdir = args.destdir / 'img_areass'
+    args.recdir = args.destdir / 'img_rec'
+    args.bwdir = args.destdir / 'img_BW'
+    args.iconssourcedir = Path('C:/Projects_src/resources/dxc-icons')
     args.projectname = args.projectdir.stem
     args.ifypath = Path(__file__).parent.parent
     args.problems = []
@@ -45,6 +55,9 @@ if __name__ == '__main__':
     parser_archi = subparsers.add_parser('archi', help='export images from archimate tool')
     parser_archi.set_defaults(command='archi')
     parser_archi.add_argument('-f', '--file', help='process only this one file')
+
+    parser_svg = subparsers.add_parser('svg', help='conver from svg to png')
+    parser_svg.set_defaults(command='svg')
 
     parser_icons = subparsers.add_parser('icons', help='add icons to images based on src_doc/docs/img/images.json')
     parser_icons.set_defaults(command='icons')
@@ -74,7 +87,7 @@ if __name__ == '__main__':
 
     if args.command=='clean':
         log(args, 'start cleaning')
-        for dirname in ['temp/img_all', 'temp/img_rec', 'temp/img_exported', 'temp/img_exported_svg', 'temp/img_icons']: # 'release/img', 
+        for dirname in [args.alldir, args.svgdir, args.exporteddir, args.iconsdir, args.areasdir, args.recdir, args.bwdir]: # 'release/img', 
             p = args.projectdir / dirname
             if p.exists():
                 shutil.rmtree(p)
@@ -95,21 +108,13 @@ if __name__ == '__main__':
         if args.debug:
             print(cmd)
         subprocess.run(cmd, shell=False)
-        # convert from svg to png
-        convert.convert_svg(args)
-        # dimg.doit(args)
         log(args, 'done archi')
-    
-    if (args.command=='icons') or (args.command=='all'):
-        log(args, 'start icons')
-        img_processing.add_icons(args)
-        log(args, 'done icons')
-    
-    if (args.command=='areas') or (args.command=='all'):
-        log(args, 'start areas')
-        img_processing.add_areas(args)
-        log(args, 'done areas')
-    
+
+    if (args.command=='archi') or (args.command=='svg') or (args.command=='all'):
+        log(args, 'start svg conversion')
+        convert.convert_svg(args)
+        log(args, 'done svg conversion')
+
     if (args.command=='umlet'):
         log(args, 'start umlet')
         # convert from uxf to png
@@ -122,20 +127,30 @@ if __name__ == '__main__':
         convert.convert_mmd(args)
         log(args, 'done mermaid')
 
-    # if (args.command=='publish') or (args.command=='all'):
-    log(args, 'start merging images')
-    # publish images to release dir
-    # imgspath = args.projectdir / 'release' / 'img'
-    imgspath = args.projectdir / 'temp' / 'img_all'
-    imgspath.mkdir(parents=True, exist_ok=True)
-    # copy png images from src  
-    # copy exported images
-    convert.mycopy(args.projectdir / 'temp' / 'img_exported', imgspath, args)
-    # overwrite them with images with icons
-    convert.mycopy(args.projectdir / 'temp' / 'img_icons', imgspath, args)
-    # copy areas images
-    convert.mycopy(args.projectdir / 'temp' / 'img_areas', imgspath, args)
-    log(args, 'done merginf images')
+    if (args.command=='icons') or (args.command=='all'):
+        log(args, 'start icons')
+        img_processing.add_icons(args)
+        log(args, 'done icons')
+    
+    if (args.command=='areas') or (args.command=='all'):
+        log(args, 'start areas')
+        img_processing.add_areas(args)
+        log(args, 'done areas')
+    
+    if args.command !='clean':
+        # if (args.command=='publish') or (args.command=='all'):
+        log(args, 'start merging images')
+        # publish images to release dir
+        # imgspath = args.projectdir / 'release' / 'img'
+        args.alldir.mkdir(parents=True, exist_ok=True)
+        # copy png images from src  
+        # copy exported images
+        convert.mycopy(args.exporteddir, args.alldir, args)
+        # overwrite them with images with icons
+        convert.mycopy(args.iconsdir, args.alldir, args)
+        # copy areas images
+        convert.mycopy(args.areasdir, args.alldir, args)
+        log(args, 'done merginf images')
 
     if (args.command=='align'):
         log(args, 'start align')

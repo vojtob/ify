@@ -43,7 +43,7 @@ def rectangles2image(img, rectangles):
 
 def imgrectangles(imgdef, args):
     # read image
-    imgpath = args.projectdir / 'temp' / 'img_exported' / imgdef['fileName']
+    imgpath = args.exporteddir / imgdef['fileName']
     if args.debug:
         print('whole image path:', imgpath)
     img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
@@ -52,7 +52,7 @@ def imgrectangles(imgdef, args):
     imgBW = convertImage(img)
     # save BW image
     if args.debug:
-        bwpath = args.projectdir / 'temp' / 'img_BW' / imgdef['fileName']
+        bwpath = args.bwdir / imgdef['fileName']
         bwpath.parent.mkdir(parents=True, exist_ok=True)           
         cv2.imwrite(str(bwpath), imgBW)
     
@@ -60,7 +60,7 @@ def imgrectangles(imgdef, args):
     rectangles = rr.getRectangles(args, imgBW, imgdef)
     if args.verbose:
         imgrec = rectangles2image(img, rectangles)
-        recpath = args.projectdir / 'temp' / 'img_rec' / imgdef['fileName']
+        recpath = args.recdir / imgdef['fileName']
         recpath.parent.mkdir(parents=True, exist_ok=True)
         cv2.imwrite(str(recpath), imgrec)
 
@@ -168,21 +168,18 @@ def add_areas(args):
 def icons2image(imgdef, args):
     if args.verbose:
         print('add icons to image {0}'.format(imgdef['fileName']))
-    if not (args.projectdir / 'temp' / 'img_exported' / imgdef['fileName']).exists():
+    if not (args.exporteddir / imgdef['fileName']).exists():
         args.problems.append('Add icons to image: file {0} does not exists !!!'.format(imgdef['fileName']))
         return
 
     img, rectangles = imgrectangles(imgdef, args)
     # add icons to image
-    # iconspath = args.projectdir / 'temp' / 'generated_icons'
-    iconspath = Path('C:/Projects_src/resources/dxc-icons')
-    iconspath2 = Path('C:/Projects_src/resources/dxc-icons/generated')
     for icondef in imgdef['icons']:
         if args.debug:
             print('  add icon', icondef['iconName'])
-        iconfilepath = iconspath / icondef['iconName']
+        iconfilepath = args.iconssourcedir / icondef['iconName']
         if not iconfilepath.exists():
-            iconfilepath = iconspath2 / icondef['iconName']
+            iconfilepath = args.iconssourcedir / 'generated' / icondef['iconName']
             if not iconfilepath.exists():
                 args.problems.append('Add icon2image: could not find icon {0} for image {1}'.format(icondef['iconName'], imgdef['fileName']))
                 return
@@ -210,7 +207,7 @@ def icons2image(imgdef, args):
         img = overlayImageOverImage(img, icon, iconxy)
 
 
-    imgiconpath = args.projectdir / 'temp' / 'img_icons' / imgdef['fileName']
+    imgiconpath = args.iconsdir / imgdef['fileName']
     imgiconpath.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(imgiconpath), img)
 
@@ -219,12 +216,12 @@ def areas2image(imgdef, args):
         print('add area {0} into image {1}'.format(imgdef['focus-name'], imgdef['fileName']))
     
     _, rectangles = imgrectangles(imgdef, args)
-    imgpath = args.projectdir / 'temp' / 'img_icons' / imgdef['fileName']
+    imgpath = args.iconsdir / imgdef['fileName']
+    if not imgpath.exists():
+        imgpath = args.exporteddir / imgdef['fileName']
     if args.debug:
         print('whole image path:', imgpath)
     img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
-    if(img.any == None):
-        img = cv2.imread(str(args.projectdir / 'temp' / 'img_exported' / imgdef['fileName']), cv2.IMREAD_UNCHANGED)
 
     # identify bounding polygons for areas
     polygons = []
@@ -263,6 +260,6 @@ def areas2image(imgdef, args):
     img[:, :, 3] = mask
     # print('final shape', img.shape)
 
-    imgpath = args.projectdir / 'temp' / 'img_areas' / imgdef['fileName'].replace('.png', '_{0}.png'.format(imgdef['focus-name']))
+    imgpath = args.areasdir / imgdef['fileName'].replace('.png', '_{0}.png'.format(imgdef['focus-name']))
     imgpath.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(imgpath), img)

@@ -51,8 +51,7 @@ def onfile_convert_mmd(args, fromfile, tofile, orig_extension, new_extension):
 def convert_svg(args):
     # convert svg files to png files
     __img_walk(args, 
-        args.projectdir / 'temp' / 'img_exported_svg', 
-        args.projectdir / 'temp' / 'img_exported', 
+        args.svgdir, args.exporteddir, 
         '.svg', '.png', onfile_convert_svg)
 
 def convert_uml(args):
@@ -60,8 +59,7 @@ def convert_uml(args):
     global movefiles
     movefiles = []
     __img_walk(args, 
-        args.projectdir / 'src_doc' / 'img',
-        args.projectdir / 'temp' / 'img_exported', 
+        args.sourcedir, args.exporteddir, 
         '.uxf', '.png', onfile_convert_uml)
     # move files
     if len(movefiles) < 1:
@@ -82,8 +80,7 @@ def convert_mmd(args):
     # convert mm files to png files
     args.problems.append('mermaid NOT ACTIVATED')
     # __img_walk(args, 
-    #     args.projectdir / 'src_doc' / 'img',
-    #     args.projectdir / 'temp' / 'img_exported', 
+    #     args.sourcedir, args.exporteddir, 
     #     '.mmd', '.png', onfile_convert_mmd)
 
 def mycopy(source_directory, destination_directory, args, ingore_dot_folders=True, onfile=None):
