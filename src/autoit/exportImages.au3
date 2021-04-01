@@ -8,6 +8,9 @@ Local $imageScale = 100;
 Local $project_dir_png = $CmdLine[1] & "\temp\img_exported";
 Local $project_dir_svg = $CmdLine[1] & "\temp\img_exported_svg";
 Local $project_dir = $project_dir_svg;
+Local $stopAfterTheFirst = false;
+Local $stop = false;
+
 If ($CmdLine[0] >= 2) Then
 	Local $onlyItem = '\' & StringReplace($CmdLine[2], "/", "\")
 EndIf;
@@ -71,6 +74,9 @@ Func exportLayer($layerID, $layerName)
 		Local $itemID = $layerID & "|#" & String($i);
 		Local $itemName = ControlTreeView($hWnd, "", "[CLASS:SysTreeView32; INSTANCE:1]", "GetText", $itemID);
 		exportItem($itemID, $layerName & '\' & $itemName);
+		If ($stop) Then
+			Return;
+		EndIf;
 	Next
 EndFunc
 
@@ -105,7 +111,11 @@ Func exportImage($itemID, $itemName)
     ; SVG
 	Send($project_dir_svg & $itemName & ".svg");
     Send("{TAB}{TAB}{HOME} {DOWN} {DOWN} {DOWN} {DOWN}");
-    Send("^{ENTER}{ENTER}");
+	If ($stopAfterTheFirst) Then
+		$stop = true;
+	Else
+		Send("^{ENTER}{ENTER}");
+	EndIf;
     
     Sleep(500);
 EndFunc
