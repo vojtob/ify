@@ -1,4 +1,7 @@
 # if the distance between two points is smaller than this, continue in line
+from numpy.lib.function_base import append
+
+
 REALLY_SMALL_GAP = 3
 # shorter lines are not line
 MIN_SEGMENT_LENGTH = 30
@@ -224,6 +227,25 @@ def find_traverse_points(area_rectangles):
             points.append(p)
         traverse = go2nextpoint(area_rectangles, points[-1], traverse[1], traverse[2], traverse[3])
     
+    return points
+
+def shiftpoints(inpoints, rectangles):
+    points = []
+    print(rectangles)
+    for p in inpoints:
+        r = rectangles[p[0]-1]
+        top = p[1][0] == 'T'
+        left = p[1][1] == 'L'
+        if left:
+            x = r[0][0]-AREA_BORDER
+        else:
+            x = r[1][0]+AREA_BORDER
+        if top:
+            y = r[0][1]-AREA_BORDER
+        else:
+            y = r[1][1]+AREA_BORDER
+        points.append((x,y))
+
     return points
 
 def set_area_gap(x):

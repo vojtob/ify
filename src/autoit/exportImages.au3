@@ -1,9 +1,9 @@
 #include <MsgBoxConstants.au3>
 Local $hWnd = WinWaitActive("Archi - " & $CmdLine[1] & "\src_doc\model\");
-Sleep(200);
+Sleep(400);
 ; set eng keyboard
 _SetKeyboardLayout("00000409", $hWnd)
-Sleep(200);
+Sleep(400);
 Local $imageScale = 100;
 Local $project_dir_png = $CmdLine[1] & "\temp\img_exported";
 Local $project_dir_svg = $CmdLine[1] & "\temp\img_exported_svg";
@@ -16,7 +16,7 @@ If ($CmdLine[0] >= 2) Then
 EndIf;
 
 
-Sleep(200);
+Sleep(400);
 
 ; export ALL
 exportItem("#0|#8", "");
@@ -92,10 +92,10 @@ Func exportImage($itemID, $itemName)
 	; select item
 	ControlFocus($hWnd, "", "[CLASS:SysTreeView32; INSTANCE:1]");
 	ControlTreeView($hWnd, "", "[CLASS:SysTreeView32; INSTANCE:1]", "Select", $itemID);
-	Sleep(200);
+	Sleep(500);
 	; open view
 	Send("{ENTER}");
-	Sleep(600);
+	Sleep(800);
 	; open export dialog
 	Send("!fe{UP}{ENTER}");
 	; fill export data

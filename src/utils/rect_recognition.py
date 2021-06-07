@@ -189,34 +189,27 @@ def findRectangles(lineSegmentsHorizontal, lineSegmentsVertical, cornerGap):
     return rectangles
 
 def getRectangles(args, imgBW, imgdef):
-    really_small_gap = 3
-    min_segment_length = 30
-    corner_gap = 12
-
-    if 'gap' in imgdef:
-        really_small_gap = int(imgdef['gap'])
-    if 'segment' in imgdef:
-        min_segment_length = int(imgdef['segment'])
-    if 'corner' in imgdef:
-        corner_gap = int(imgdef['corner'])
+    really_small_gap   = int(imgdef['gap'])     if 'gap'     in imgdef else 3
+    min_segment_length = int(imgdef['segment']) if 'segment' in imgdef else 30
+    corner_gap         = int(imgdef['corner'])  if 'corner'  in imgdef else 12
     if args.debug:
         print('identify rectangles with gap {0}, segment {1}, corner {2}'.format(really_small_gap, min_segment_length, corner_gap))
 
     # identify rectangles
     lineSegmentsHorizontal, lineSegmentsVertical = findLineSegments(imgBW, really_small_gap, min_segment_length)
-    if args.debug:
-        # log segments
-        print('HORIZONTAL segments')
-        for y in sorted(lineSegmentsHorizontal.keys()):
-            print(y)
-            for x in lineSegmentsHorizontal[y]:
-                print(x)
+    # if args.debug:
+    #    # log segments
+    #    print('HORIZONTAL segments')
+    #    for y in sorted(lineSegmentsHorizontal.keys()):
+    #        print(y)
+    #        for x in lineSegmentsHorizontal[y]:
+    #            print(x)
         # print(lineSegmentsHorizontal)
-        print('VERTICAL segments')
-        for x in sorted(lineSegmentsVertical.keys()):
-            print(x)
-            for y in lineSegmentsVertical[x]:
-                print(y)
+    #    print('VERTICAL segments')
+    #    for x in sorted(lineSegmentsVertical.keys()):
+    #        print(x)
+    #        for y in lineSegmentsVertical[x]:
+    #            print(y)
 
     rectangles = findRectangles(lineSegmentsHorizontal, lineSegmentsVertical, corner_gap)
     # for i,r in enumerate(rectangles):

@@ -11,12 +11,17 @@ import utils.rect_areas as ra
 
 BW_TRESHOLD = 135
 
-def convertImage(img):
+def convertImage(img, imgdef, args):
     if len(img.shape) > 2:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     else:
         gray = img
-    thresh = cv2.threshold(gray, BW_TRESHOLD, 255, cv2.THRESH_BINARY_INV)[1]
+
+    treshold = int(imgdef['treshold']) if 'treshold' in imgdef else BW_TRESHOLD
+    if args.debug:
+        print('treshold', treshold)
+
+    thresh = cv2.threshold(gray, treshold, 255, cv2.THRESH_BINARY_INV)[1]
     # edges = cv2.Canny(gray,100,200)
     # blur = cv2.blur(edges,(4,4))
     # cv2.imshow(cv2.namedWindow("addIcons"), gray)
@@ -41,15 +46,9 @@ def rectangles2image(img, rectangles):
 
     return imgRec
 
-def imgrectangles(imgdef, args):
-    # read image
-    imgpath = args.exporteddir / imgdef['fileName']
-    if args.debug:
-        print('whole image path:', imgpath)
-    img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
-
+def imgrectangles(img, imgdef, args):
     # convert to BW
-    imgBW = convertImage(img)
+    imgBW = convertImage(img, imgdef, args)
     # save BW image
     if args.debug:
         bwpath = args.bwdir / imgdef['fileName']
@@ -64,7 +63,7 @@ def imgrectangles(imgdef, args):
         recpath.parent.mkdir(parents=True, exist_ok=True)
         cv2.imwrite(str(recpath), imgrec)
 
-    return img, rectangles
+    return rectangles
 
 def overlayImageOverImage(bigImg, smallImage, smallImageOrigin):
     # print('overlay bigSize: {0[0]}x{0[1]}  iconSize: {1[0]}x{1[1]}  placement: {2[0]}x{2[1]}'.format(bigImg.shape, smallImage.shape, smallImageOrigin))
@@ -133,46 +132,51 @@ def geticonxy(args, filename, iconname, icon, rectangle, xAlign, yAlign, marginS
 
     return (x,y)
 
-def add_icons(args):
+def __processdef(args, what, imgdef):
     if args.verbose:
-        print('add icons')
-    # read images icons definitions   
-    if not (args.projectdir / 'src_doc' / 'img' / 'images.json').exists():
-        if args.verbose:
-            print('no icons, skipp it')
+        print('Start adding ' + what + ' to image {0}'.format(imgdef['fileName']))
+
+    # read image
+    imgpath = args.exporteddir / imgdef['fileName']
+    if not (imgpath).exists():
+        args.problems.append('Add ' + what + ' to image: file {0} does not exists !!!'.format(imgdef['fileName']))
         return
-    with open(args.projectdir / 'src_doc' / 'img' / 'images.json') as imagesFile:
+    if args.debug:
+        print('whole image path:', imgpath)
+    img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
+
+    if what == 'icons':
+        icons2image(args, imgdef, img)
+    elif what == 'areas':
+        areas2image(args, imgdef, img)
+    else:
+        args.problems.append('do not know what to add ' + what)
+
+def __add_decorations(args, what):
+    if args.verbose:
+        print('add ', what)
+    # read definitions 
+    p =   args.projectdir / 'src_doc' / 'img' / (what+'.json')
+    if not p.exists():
+        if args.verbose:
+            print('no ' + what + ' definition at ' + str(p) +', skipp it')
+        return
+    with open(p) as imagesFile:
         imagedefs = json.load(imagesFile)
     for imgdef in imagedefs:
         if (args.file is not None) and (not PureWindowsPath(imgdef['fileName']).with_suffix('').match(args.file)):
             # we want to process a specific file, but not this
             continue
-        icons2image(imgdef, args)
+        __processdef(args, what, imgdef)
+
+def add_icons(args):
+    __add_decorations(args, 'icons')
 
 def add_areas(args):
-    if args.verbose:
-        print('add areas')
-    # read images icons definitions   
-    if not (args.projectdir / 'src_doc' / 'img' / 'img_focus.json').exists():
-        if args.verbose:
-            print('no areas, skipp it')
-        return
-    with open(args.projectdir / 'src_doc' / 'img' / 'img_focus.json') as imagesFile:
-        imagedefs = json.load(imagesFile)
-    for imgdef in imagedefs:
-        if (args.file is not None) and (not PureWindowsPath(imgdef['fileName']).with_suffix('').match(args.file)):
-            # we want to process a specific file, but not this
-            continue
-        areas2image(imgdef, args)
+    __add_decorations(args, 'areas')
 
-def icons2image(imgdef, args):
-    if args.verbose:
-        print('add icons to image {0}'.format(imgdef['fileName']))
-    if not (args.exporteddir / imgdef['fileName']).exists():
-        args.problems.append('Add icons to image: file {0} does not exists !!!'.format(imgdef['fileName']))
-        return
-
-    img, rectangles = imgrectangles(imgdef, args)
+def icons2image(args, imgdef, img):
+    rectangles = imgrectangles(img, imgdef, args)
     # add icons to image
     for icondef in imgdef['icons']:
         if args.debug:
@@ -211,27 +215,26 @@ def icons2image(imgdef, args):
     imgiconpath.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(imgiconpath), img)
 
-def areas2image(imgdef, args):
-    if args.verbose:
-        print('add area {0} into image {1}'.format(imgdef['focus-name'], imgdef['fileName']))
-    
-    _, rectangles = imgrectangles(imgdef, args)
-    imgpath = args.iconsdir / imgdef['fileName']
-    if not imgpath.exists():
-        imgpath = args.exporteddir / imgdef['fileName']
-    if args.debug:
-        print('whole image path:', imgpath)
-    img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
-
+def areas2image(args, imgdef, img):
+    rectangles = imgrectangles(img, imgdef, args)
     # identify bounding polygons for areas
     polygons = []
     if 'distance' in imgdef:
         if args.debug:
             print('set distance', int(imgdef['distance']))
         ra.set_area_gap(int(imgdef['distance']))
-    for area in imgdef['areas']:
-        area_rectangles = [rectangles[r-1] for r in area]            
-        polygons.append(ra.find_traverse_points(area_rectangles))
+
+    if 'areas' in imgdef:
+        if args.debug:
+            print('aras by AREAS')
+        for area in imgdef['areas']:
+            area_rectangles = [rectangles[r-1] for r in area]            
+            polygons.append(ra.find_traverse_points(area_rectangles))
+    elif 'points' in imgdef:
+        if args.debug:
+            print('aras by POINTS')
+        polygons.append(ra.shiftpoints(imgdef['points'], rectangles))
+
 
     linecolor = (imgdef['linecolor'][2], imgdef['linecolor'][1], imgdef['linecolor'][0]) if 'linecolor' in imgdef else (0,0,255)
     linewidth = imgdef['linewidth'] if ('linewidth' in imgdef) else 2
