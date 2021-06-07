@@ -144,11 +144,12 @@ def __processdef(args, what, imgdef):
     if args.debug:
         print('whole image path:', imgpath)
     img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
+    rectangles = imgrectangles(img, imgdef, args)
 
     if what == 'icons':
-        icons2image(args, imgdef, img)
+        icons2image(args, imgdef, img, rectangles)
     elif what == 'areas':
-        areas2image(args, imgdef, img)
+        areas2image(args, imgdef, img, rectangles)
     else:
         args.problems.append('do not know what to add ' + what)
 
@@ -175,8 +176,7 @@ def add_icons(args):
 def add_areas(args):
     __add_decorations(args, 'areas')
 
-def icons2image(args, imgdef, img):
-    rectangles = imgrectangles(img, imgdef, args)
+def icons2image(args, imgdef, img, rectangles):
     # add icons to image
     for icondef in imgdef['icons']:
         if args.debug:
@@ -215,30 +215,33 @@ def icons2image(args, imgdef, img):
     imgiconpath.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(imgiconpath), img)
 
-def areas2image(args, imgdef, img):
-    rectangles = imgrectangles(img, imgdef, args)
+def areas2image(args, imgdef, img, rectangles):
+    # try to read image with icons
+    imgpath = args.iconsdir / imgdef['fileName']
+    if imgpath.exists():
+        img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
+
     # identify bounding polygons for areas
     polygons = []
-    if 'distance' in imgdef:
-        if args.debug:
-            print('set distance', int(imgdef['distance']))
-        ra.set_area_gap(int(imgdef['distance']))
-
     if 'areas' in imgdef:
         if args.debug:
             print('aras by AREAS')
+        if 'distance' in imgdef:
+            if args.debug:
+                print('set distance', int(imgdef['distance']))
+            ra.set_area_gap(int(imgdef['distance']))
         for area in imgdef['areas']:
             area_rectangles = [rectangles[r-1] for r in area]            
             polygons.append(ra.find_traverse_points(area_rectangles))
     elif 'points' in imgdef:
         if args.debug:
-            print('aras by POINTS')
+            print('areas by POINTS')
         polygons.append(ra.shiftpoints(imgdef['points'], rectangles))
 
 
-    linecolor = (imgdef['linecolor'][2], imgdef['linecolor'][1], imgdef['linecolor'][0]) if 'linecolor' in imgdef else (0,0,255)
-    linewidth = imgdef['linewidth'] if ('linewidth' in imgdef) else 2
-    opacity = imgdef['opacity'] if 'opacity' in imgdef else 80
+    linecolor = (imgdef['linecolor'][2], imgdef['linecolor'][1], imgdef['linecolor'][0]) if 'linecolor' in imgdef else (145,44,111)
+    linewidth = imgdef['linewidth'] if ('linewidth' in imgdef) else 3
+    opacity   = imgdef['opacity'] if 'opacity' in imgdef else 80
     if args.debug:
         print('linecolor: {0}, linewidth: {1}, opacity: {2}'.format(linecolor, linewidth, opacity))
 

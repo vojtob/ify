@@ -231,7 +231,7 @@ def find_traverse_points(area_rectangles):
 
 def shiftpoints(inpoints, rectangles):
     points = []
-    print(rectangles)
+    # print(rectangles)
     for p in inpoints:
         r = rectangles[p[0]-1]
         top = p[1][0] == 'T'
