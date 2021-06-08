@@ -7,7 +7,6 @@ import numpy as np
 import cv2
 
 import utils.rect_recognition as rr
-import utils.rect_areas as ra
 
 BW_TRESHOLD = 135
 
@@ -153,7 +152,7 @@ def __processdef(args, what, imgdef):
     else:
         args.problems.append('do not know what to add ' + what)
 
-def __add_decorations(args, what):
+def add_decorations(args, what):
     if args.verbose:
         print('add ', what)
     # read definitions 
@@ -169,12 +168,6 @@ def __add_decorations(args, what):
             # we want to process a specific file, but not this
             continue
         __processdef(args, what, imgdef)
-
-def add_icons(args):
-    __add_decorations(args, 'icons')
-
-def add_areas(args):
-    __add_decorations(args, 'areas')
 
 def icons2image(args, imgdef, img, rectangles):
     # add icons to image
@@ -221,39 +214,41 @@ def areas2image(args, imgdef, img, rectangles):
     if imgpath.exists():
         img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
 
+    border = imgdef['border']  if 'border' in imgdef else 8
     # identify bounding polygons for areas
-    polygons = []
-    if 'areas' in imgdef:
-        if args.debug:
-            print('aras by AREAS')
-        if 'distance' in imgdef:
-            if args.debug:
-                print('set distance', int(imgdef['distance']))
-            ra.set_area_gap(int(imgdef['distance']))
-        for area in imgdef['areas']:
-            area_rectangles = [rectangles[r-1] for r in area]            
-            polygons.append(ra.find_traverse_points(area_rectangles))
-    elif 'points' in imgdef:
-        if args.debug:
-            print('areas by POINTS')
-        polygons.append(ra.shiftpoints(imgdef['points'], rectangles))
+    polygon = []
+    for p in imgdef['points']:
+        r = rectangles[p[0]-1]
+        top = p[1][0] == 'T'
+        left = p[1][1] == 'L'
+        x = (r[0][0]-border) if left else (r[1][0]+border)
+        y = (r[0][1]-border) if top  else (r[1][1]+border)
+        if polygon:
+            prev = polygon[-1]
+            if abs(prev[0]-x) < (2*border):
+                x = prev[0]
+            if abs(prev[1]-y) < (2*border):
+                y = prev[1]
+        polygon.append((x,y))
 
+    if args.debug:
+        print(polygon)
 
     linecolor = (imgdef['linecolor'][2], imgdef['linecolor'][1], imgdef['linecolor'][0]) if 'linecolor' in imgdef else (145,44,111)
-    linewidth = imgdef['linewidth'] if ('linewidth' in imgdef) else 3
+    linewidth = imgdef['linewidth'] if ('linewidth' in imgdef) else 2
     opacity   = imgdef['opacity'] if 'opacity' in imgdef else 80
     if args.debug:
         print('linecolor: {0}, linewidth: {1}, opacity: {2}'.format(linecolor, linewidth, opacity))
 
     # add transparency to image
     mask = np.full((img.shape[0], img.shape[1]), opacity, np.uint8)
-    for polygon in polygons:
-        points = np.array([[p[0],p[1]] for p in polygon], np.int32)
-        points = points.reshape((-1,1,2))
-        # draw red polygon
-        img = cv2.polylines(img, [points], True, linecolor, linewidth)
-        # use mask to set transparency
-        mask = cv2.fillPoly(mask, [points], 255)
+    # for polygon in polygon:
+    points = np.array([[p[0],p[1]] for p in polygon], np.int32)
+    points = points.reshape((-1,1,2))
+    # draw red polygon
+    img = cv2.polylines(img, [points], True, linecolor, linewidth)
+    # use mask to set transparency
+    mask = cv2.fillPoly(mask, [points], 255)
     # print('orig shape', img.shape)
     if img.shape[2] < 4:
         # no transparency in image

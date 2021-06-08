@@ -129,12 +129,12 @@ if __name__ == '__main__':
 
     if (args.command=='icons') or (args.command=='all'):
         log(args, 'start icons')
-        img_processing.add_icons(args)
+        img_processing.add_decorations(args, 'icons')
         log(args, 'done icons')
     
     if (args.command=='areas') or (args.command=='all'):
         log(args, 'start areas')
-        img_processing.add_areas(args)
+        img_processing.add_decorations(args, 'areas')
         log(args, 'done areas')
     
     if args.command !='clean':
