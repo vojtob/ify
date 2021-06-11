@@ -5,6 +5,8 @@ import json
 
 import numpy as np
 import cv2
+from numpy.lib.shape_base import apply_along_axis
+from cairosvg import svg2png
 
 import utils.rect_recognition as rr
 
@@ -174,14 +176,25 @@ def icons2image(args, imgdef, img, rectangles):
     for icondef in imgdef['icons']:
         if args.debug:
             print('  add icon', icondef['iconName'])
-        iconfilepath = args.iconssourcedir / icondef['iconName']
-        if not iconfilepath.exists():
-            iconfilepath = args.iconssourcedir / 'generated' / icondef['iconName']
+        if icondef['iconName'].endswith('.svg'):
+            # SVG
+            ipath = Path('C:/Projects_src/resources/dxc-icons/DXC_Miscellaneous_Icons')/icondef['iconName']
+            isize = icondef['size']
+            print(str(ipath), isize)
+            icon = svg2png(url = str(ipath), output_width=isize, output_height=icondef['size'])
+            icon = np.fromstring(icon, np.uint8)
+            icon = cv2.imdecode(icon, cv2.IMREAD_UNCHANGED)
+        else:
+            # PNG
+            iconfilepath = args.iconssourcedir / icondef['iconName']
             if not iconfilepath.exists():
-                args.problems.append('Add icon2image: could not find icon {0} for image {1}'.format(icondef['iconName'], imgdef['fileName']))
-                return
+                iconfilepath = args.iconssourcedir / 'generated' / icondef['iconName']
+                if not iconfilepath.exists():
+                    args.problems.append('Add icon2image: could not find icon {0} for image {1}'.format(icondef['iconName'], imgdef['fileName']))
+                    return
+            icon = cv2.imread(str(iconfilepath), cv2.IMREAD_UNCHANGED)
         # resize icon
-        icon = cv2.imread(str(iconfilepath), cv2.IMREAD_UNCHANGED)
+        print(icon.shape)
         s = max(icon.shape[0], icon.shape[1])
         dy = int((icondef['size']*icon.shape[0])/s)
         dx = int((icondef['size']*icon.shape[1])/s)
