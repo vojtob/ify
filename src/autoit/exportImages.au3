@@ -1,9 +1,13 @@
 #include <MsgBoxConstants.au3>
+;MsgBox($MB_OK, "Title", "Archi - " & $CmdLine[1] & "\src_doc\model\")
 Local $hWnd = WinWaitActive("Archi - " & $CmdLine[1] & "\src_doc\model\");
+;MsgBox($MB_OK, "Title", "Activated")
 Sleep(400);
+
 ; set eng keyboard
 _SetKeyboardLayout("00000409", $hWnd)
-Sleep(400);
+Sleep(1000);
+
 Local $imageScale = 100;
 Local $project_dir_png = $CmdLine[1] & "\temp\img_exported";
 Local $project_dir_svg = $CmdLine[1] & "\temp\img_exported_svg";
