@@ -14,7 +14,7 @@ def log(args, message):
     print(message_format.format(args=args, message=message))
 
 def __add_project(args):
-    if args.projectdir is None:
+    if not 'projectdir' in args:
         args.projectdir = Path.cwd().parent
     else:
         args.projectdir = Path(args.projectdir)
@@ -43,9 +43,11 @@ if __name__ == '__main__':
     print('ify: START\n')    
     
     parser = argparse.ArgumentParser(prog='ify', description='architecture images, icons, ...')
-    parser.add_argument('-pd', '--projectdir', help='set project explicitly')
+    # parser.add_argument('-pd', '--projectdir', help='set project explicitly')
+    # parser.add_argument('command', choices=['all', 'clean', 'archi', 'svg', 'icons', 'areas', 'publish', 'umlet', 'mermaid'], help='what to do')
     parser.add_argument('-v', '--verbose', help='to be more verbose', action='store_true')
     parser.add_argument('-d', '--debug', help='add debug info, very low level', action='store_true')
+    parser.add_argument('-p', '--poster', help='bigger dpi for posters, set scale e.g. 4', type=float)
     parser.add_argument('-f', '--file', help='process only this one file')
     subparsers = parser.add_subparsers(help='command help')
 
@@ -54,21 +56,21 @@ if __name__ == '__main__':
 
     parser_archi = subparsers.add_parser('archi', help='export images from archimate tool')
     parser_archi.set_defaults(command='archi')
-    parser_archi.add_argument('-f', '--file', help='process only this one file')
+    # # parser_archi.add_argument('-f', '--file', help='process only this one file')
 
     parser_svg = subparsers.add_parser('svg', help='conver from svg to png')
     parser_svg.set_defaults(command='svg')
 
     parser_icons = subparsers.add_parser('icons', help='add icons to images based on src_doc/docs/img/images.json')
     parser_icons.set_defaults(command='icons')
-    parser_icons.add_argument('-f', '--file', help='process only this one file')
+    # # parser_icons.add_argument('-f', '--file', help='process only this one file')
 
     parser_areas = subparsers.add_parser('areas', help='create image with focused area based on src_doc/docs/img/img_focus.json')
     parser_areas.set_defaults(command='areas')
-    parser_areas.add_argument('-f', '--file', help='process only this one file')
+    # # parser_areas.add_argument('-f', '--file', help='process only this one file')
 
-    parser_publish = subparsers.add_parser('publish', help='publish image files')
-    parser_publish.set_defaults(command='publish')
+    # parser_publish = subparsers.add_parser('publish', help='publish image files')
+    # parser_publish.set_defaults(command='publish')
 
     parser_umlet = subparsers.add_parser('umlet', help='umlet -> png')
     parser_umlet.set_defaults(command='umlet')
@@ -77,12 +79,14 @@ if __name__ == '__main__':
     parser_mermaid.set_defaults(command='mermaid')
 
     args = parser.parse_args()
+    print(args)
     args = __add_project(args)
     if args.debug:
         args.verbose = True
 
-    if not hasattr(args, 'command'):
-        args.command = 'all'
+
+    # if not hasattr(args, 'command'):
+    #     args.command = 'all'
     log(args, 'starts with the command ' + args.command)
 
     if args.command=='clean':
@@ -103,7 +107,7 @@ if __name__ == '__main__':
             autoit_path= PureWindowsPath('C:/Program Files (x86)/AutoIt3/AutoIt3_x64.exe'), 
             script_path=args.ifypath / 'src' / 'autoit' / 'exportImages.au3', 
             project_path=args.projectdir)
-        if args.file is not None:
+        if args.file:
             cmd = cmd + ' ' + args.file
         if args.debug:
             print(cmd)

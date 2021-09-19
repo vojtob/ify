@@ -23,8 +23,12 @@ def __img_walk(args, source_path, destination_path, orig_extension, new_extensio
 
 def onfile_convert_svg(args, fromfile, tofile, orig_extension, new_extension):
     # svg_command = str(Path(os.environ['IM_HOME'], 'magick')) + ' -density 144 {srcfile} {destfile}'
-    svg_command = 'magick -density 144 {srcfile} {destfile}'
-    cmd = svg_command.format(srcfile=fromfile, destfile=tofile)
+    density = 144
+    if args.poster:
+        density = int(density * args.poster)
+    # svg_command = 'magick -density 144 {srcfile} {destfile}'
+    svg_command = 'magick -density {density} {srcfile} {destfile}'
+    cmd = svg_command.format(srcfile=fromfile, destfile=tofile, density=density)
     if args.debug:
         print(cmd)
     subprocess.run(cmd, shell=False)
@@ -40,13 +44,13 @@ def onfile_convert_uml(args, fromfile, tofile, orig_extension, new_extension):
     movefiles.append((x, tofile))
    
 def onfile_convert_mmd(args, fromfile, tofile, orig_extension, new_extension):
-    mmPath = os.path.join('C:/', 'prg', 'mermaid', 'node_modules', 'mermaid.cli', 'index.bundle.js')
-    mmd_command = 'node {mmpath} -w 1400 -i {srcfile} -o {destfile}'
+    # mmPath = os.path.join('C:/', 'prg', 'mermaid', 'node_modules', 'mermaid.cli', 'index.bundle.js')
+    mmPath = str(Path('C:/prg/node_modules/.bin/mmdc'))
+    mmd_command = '{mmpath} -w 1400 -i {srcfile} -o {destfile}'
     cmd = mmd_command.format(srcfile=fromfile, destfile=tofile, mmpath=mmPath)
     if args.debug:
         print(cmd)
-    subprocess.run(cmd, shell=False)
-        
+    subprocess.run(cmd, shell=True)
 
 def convert_svg(args):
     # convert svg files to png files
@@ -78,10 +82,10 @@ def convert_uml(args):
 
 def convert_mmd(args):
     # convert mm files to png files
-    args.problems.append('mermaid NOT ACTIVATED')
-    # __img_walk(args, 
-    #     args.sourcedir, args.exporteddir, 
-    #     '.mmd', '.png', onfile_convert_mmd)
+    # args.problems.append('mermaid NOT ACTIVATED')
+    __img_walk(args, 
+        args.sourcedir, args.exporteddir, 
+        '.mmd', '.png', onfile_convert_mmd)
 
 def mycopy(source_directory, destination_directory, args, ingore_dot_folders=True, onfile=None):
     """ copy files from source to destination

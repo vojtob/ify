@@ -192,6 +192,11 @@ def getRectangles(args, imgBW, imgdef):
     really_small_gap   = int(imgdef['gap'])     if 'gap'     in imgdef else 3
     min_segment_length = int(imgdef['segment']) if 'segment' in imgdef else 30
     corner_gap         = int(imgdef['corner'])  if 'corner'  in imgdef else 12
+    if args.poster:
+        really_small_gap   = int(really_small_gap * args.poster)
+        min_segment_length = int(min_segment_length * args.poster)
+        corner_gap         = int(corner_gap * args.poster)
+
     if args.debug:
         print('identify rectangles with gap {0}, segment {1}, corner {2}'.format(really_small_gap, min_segment_length, corner_gap))
 
