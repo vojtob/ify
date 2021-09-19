@@ -3,8 +3,6 @@ from pathlib import PureWindowsPath, Path
 import shutil
 import subprocess
 
-# import lxml.etree as ET
-
 from utils import convert, img_processing
 
 def log(args, message):
@@ -24,7 +22,7 @@ def __add_project(args):
     args.svgdir = args.destdir / 'img_exported_svg'
     args.exporteddir = args.destdir / 'img_exported'
     args.iconsdir = args.destdir / 'img_icons'
-    args.areasdir = args.destdir / 'img_areass'
+    args.areasdir = args.destdir / 'img_areas'
     args.recdir = args.destdir / 'img_rec'
     args.bwdir = args.destdir / 'img_BW'
     args.iconssourcedir = Path('C:/Projects_src/resources/dxc-icons')
@@ -54,13 +52,6 @@ if __name__ == '__main__':
     parser_clean = subparsers.add_parser('clean', help='clean all generated files and folders')
     parser_clean.set_defaults(command='clean')
 
-    parser_archi = subparsers.add_parser('archi', help='export images from archimate tool')
-    parser_archi.set_defaults(command='archi')
-    # # parser_archi.add_argument('-f', '--file', help='process only this one file')
-
-    parser_svg = subparsers.add_parser('svg', help='conver from svg to png')
-    parser_svg.set_defaults(command='svg')
-
     parser_icons = subparsers.add_parser('icons', help='add icons to images based on src_doc/docs/img/images.json')
     parser_icons.set_defaults(command='icons')
     # # parser_icons.add_argument('-f', '--file', help='process only this one file')
@@ -69,8 +60,8 @@ if __name__ == '__main__':
     parser_areas.set_defaults(command='areas')
     # # parser_areas.add_argument('-f', '--file', help='process only this one file')
 
-    # parser_publish = subparsers.add_parser('publish', help='publish image files')
-    # parser_publish.set_defaults(command='publish')
+    parser_svg = subparsers.add_parser('svg', help='conver from svg to png')
+    parser_svg.set_defaults(command='svg')
 
     parser_umlet = subparsers.add_parser('umlet', help='umlet -> png')
     parser_umlet.set_defaults(command='umlet')
@@ -78,20 +69,22 @@ if __name__ == '__main__':
     parser_mermaid = subparsers.add_parser('mermaid', help='mermaid images -> png')
     parser_mermaid.set_defaults(command='mermaid')
 
+    # parser_publish = subparsers.add_parser('publish', help='publish image files')
+    # parser_publish.set_defaults(command='publish')
+
     args = parser.parse_args()
     print(args)
     args = __add_project(args)
     if args.debug:
         args.verbose = True
 
-
-    # if not hasattr(args, 'command'):
-    #     args.command = 'all'
+    if not hasattr(args, 'command'):
+        args.command = 'all'
     log(args, 'starts with the command ' + args.command)
 
     if args.command=='clean':
         log(args, 'start cleaning')
-        for dirname in [args.alldir, args.svgdir, args.exporteddir, args.iconsdir, args.areasdir, args.recdir, args.bwdir]: # 'release/img', 
+        for dirname in [args.alldir, args.exporteddir, args.iconsdir, args.areasdir, args.recdir, args.bwdir]: # 'release/img', 
             p = args.projectdir / dirname
             if p.exists():
                 shutil.rmtree(p)
@@ -99,22 +92,7 @@ if __name__ == '__main__':
                     print('delete', p)
         log(args, 'done cleaning')
 
-    if (args.command=='archi') or (args.command=='all'):
-        log(args, 'start archi')
-        # export from archi
-        print('export images from archi - OPEN ARCHI!')
-        cmd = '"{autoit_path}" {script_path} {project_path}'.format(
-            autoit_path= PureWindowsPath('C:/Program Files (x86)/AutoIt3/AutoIt3_x64.exe'), 
-            script_path=args.ifypath / 'src' / 'autoit' / 'exportImages.au3', 
-            project_path=args.projectdir)
-        if args.file:
-            cmd = cmd + ' ' + args.file
-        if args.debug:
-            print(cmd)
-        subprocess.run(cmd, shell=False)
-        log(args, 'done archi')
-
-    if (args.command=='archi') or (args.command=='svg') or (args.command=='all'):
+    if (args.command=='svg') or (args.command=='all'):
         log(args, 'start svg conversion')
         convert.convert_svg(args)
         log(args, 'done svg conversion')
@@ -155,19 +133,6 @@ if __name__ == '__main__':
         # copy areas images
         convert.mycopy(args.areasdir, args.alldir, args)
         log(args, 'done merginf images')
-
-    if (args.command=='align'):
-        log(args, 'start align')
-        # align elements in archimate file
-        # modelname = args.projectname+'.archimate'
-        # dom = ET.parse( str(args.projectdir / 'src_doc' / 'model' / modelname))
-        # xslt = ET.parse(str(args.docoolpath / 'src' / 'xslt' / 'align2grid.xsl'))
-        # transform = ET.XSLT(xslt)
-        # newdom = transform(dom)
-        # modelname2 = args.projectname+'2.archimate'
-        # with open(args.projectdir / 'src_doc' / 'model' / modelname2, 'w', encoding='UTF-8') as fout:
-        #     fout.write(ET.tostring(newdom, encoding='unicode', method='xml')) #, pretty_print=True
-        log(args, 'stop align')
 
     if args.problems:
         print('\nify: DONE ... with PROBLEMS !!')
