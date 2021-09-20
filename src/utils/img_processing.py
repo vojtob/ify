@@ -304,7 +304,7 @@ def icons2image(args, imgdef, imgPath, rectangles):
                 print('add icon by position', iconxy)
             iconxy = (icondef['x'], icondef['y'])
 
-        icon_cmd = '( {iconpath} -filter Hanning -resize {iconsize}x{iconsize} ) -gravity NorthWest -geometry +{x}+{y} -composite'.format(
+        icon_cmd = '( {iconpath} -resize {iconsize}x{iconsize} ) -gravity NorthWest -geometry +{x}+{y} -composite'.format(
             iconpath=iconfilepath, iconsize=iconsize, x=iconxy[0], y=iconxy[1])
         icmd = icmd + ' ' + icon_cmd
 
