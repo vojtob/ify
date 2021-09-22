@@ -322,14 +322,42 @@ def areas2image(args, imgdef, img, rectangles):
         img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
 
     border = imgdef['border']  if 'border' in imgdef else 8
+    linewidth = imgdef['linewidth'] if ('linewidth' in imgdef) else 2
+    linecolor = (imgdef['linecolor'][2], imgdef['linecolor'][1], imgdef['linecolor'][0]) if 'linecolor' in imgdef else (145,44,111)
+    opacity   = imgdef['opacity'] if 'opacity' in imgdef else 80
+    if args.poster:
+        border = int(border * args.poster)
+        linewidth = int(linewidth * args.poster)
+    if args.debug:
+        print('linecolor: {0}, linewidth: {1}, opacity: {2}, border: {3}'.format(linecolor, linewidth, opacity, border))
+
     # identify bounding polygons for areas
+    points = []
+    if 'points' in imgdef:
+        for p in imgdef['points']:
+            r = rectangles[p[0]-1]
+            top = p[1][0] == 'T'
+            left = p[1][1] == 'L'
+            x = (r[0][0]-border) if left else (r[1][0]+border)
+            y = (r[0][1]-border) if top  else (r[1][1]+border)
+            points.append([x,y])
+    if 'simplerect' in imgdef:
+        sr = imgdef['simplerect']
+        r = rectangles[sr[0]-1]
+        x1 = r[0][0]-border
+        y1 = r[0][1]-border
+        r = rectangles[sr[1]-1]
+        x2 = r[1][0]+border
+        y2 = r[1][1]+border
+        points.append([x1,y1])
+        points.append([x2,y1])
+        points.append([x2,y2])
+        points.append([x1,y2])
+
     polygon = []
-    for p in imgdef['points']:
-        r = rectangles[p[0]-1]
-        top = p[1][0] == 'T'
-        left = p[1][1] == 'L'
-        x = (r[0][0]-border) if left else (r[1][0]+border)
-        y = (r[0][1]-border) if top  else (r[1][1]+border)
+    for p in points:
+        x = p[0]
+        y = p[1]
         if polygon:
             prev = polygon[-1]
             if abs(prev[0]-x) < (2*border):
@@ -341,12 +369,6 @@ def areas2image(args, imgdef, img, rectangles):
 
     if args.debug:
         print(polygon)
-
-    linecolor = (imgdef['linecolor'][2], imgdef['linecolor'][1], imgdef['linecolor'][0]) if 'linecolor' in imgdef else (145,44,111)
-    linewidth = imgdef['linewidth'] if ('linewidth' in imgdef) else 2
-    opacity   = imgdef['opacity'] if 'opacity' in imgdef else 80
-    if args.debug:
-        print('linecolor: {0}, linewidth: {1}, opacity: {2}'.format(linecolor, linewidth, opacity))
 
     # add transparency to image
     mask = np.full((img.shape[0], img.shape[1]), opacity, np.uint8)
