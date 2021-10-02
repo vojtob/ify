@@ -68,11 +68,36 @@ Táto časť je spoločná aj pre ikony aj pre oblasti
 
 ```json
 [
-    { "fileName": "02-Application/00-HighLevelAA.png", "treshold" : 135, "focus-name":"01-ziskanie", "points": [
+    { "fileName": "02-Application/00-HighLevelAA.png", "treshold" : 135, "focus-name":"01-ziskanie", "polygon": [
         [3, "TL"], [3, "TR"], [7, "BR"], [5, "BL"]
     ]},
-    { "fileName": "02-Application/00-HighLevelAA.png", "treshold" : 135, "focus-name":"02-prezeranie", "points": [
+    { "fileName": "02-Application/00-HighLevelAA.png", "treshold" : 135, "focus-name":"02-prezeranie", "polygon": [
         [1, "TL"], [3, "TR"], [3, "BR"], [3, "BL"], [2, "BR"], [2, "BL"], [4, "BR"], [4, "BL"]
     ]}
 ]
 ```
+Ak chcem oblasť iba ako jednoduchý obdĺžnik, tak sa to dá jednoduchšie
+
+```json
+[
+    { "fileName": "02-Application/01-AA-functions.png", "treshold" : 135, "focus-name":"01-obcan", "simplerect": [1, 11]},
+]
+```
+
+## Ciary
+
+Prvý hovorí o umiestnení začiatku. Najprv id obdĺžnika, potom poloha v rámci neho
+Druhý (a každý ďalší) hovorí, ktorým smerom (iba T/D/L/R takže kolmo), do ktorého obdĺžnika a tam pozícia v smere ktorý sa mení, druhá súradnica sa preberie.
+
+```json
+[
+    { "fileName": "02-Application/01-AA-functions.png", "treshold" : 135, "focus-name":"01-obcan", 
+        "lines": [
+            [[rectID, x, y], [direction, rectID, position], [direction, rectID, position], [direction, rectID, position]],
+            [[4, 0.5, 0.5], ["L", 3, 0.5], ["D", 12, 0.5]]
+        ]
+    },
+]
+```
+
+
