@@ -209,65 +209,6 @@ def add_decorations(args, what):
         print('file {0} not found for {1}'.format(args.file, what))
         args.problems.append('file {0} not found for {1}'.format(args.file, what))
 
-def icons2imageXX(args, imgdef, img, rectangles):
-    # add icons to image
-    for icondef in imgdef['icons']:
-        if args.debug:
-            print('  add icon', icondef['iconName'])
-        if icondef['iconName'].endswith('.svg'):
-            # SVG
-            # ipath = Path('C:/Projects_src/resources/dxc-icons/DXC_Miscellaneous_Icons')/icondef['iconName']
-            ipath = args.iconssourcedir / icondef['iconName']
-            isize = icondef['size']
-            print(str(ipath), isize)
-            icon = svg2png(url = str(ipath), output_width=isize, output_height=icondef['size'])
-            icon = np.fromstring(icon, np.uint8)
-            icon = cv2.imdecode(icon, cv2.IMREAD_UNCHANGED)
-        else:
-            # PNG
-            iconfilepath = args.iconssourcedir / icondef['iconName']
-            if not iconfilepath.exists():
-                iconfilepath = args.iconssourcedir / 'generated' / icondef['iconName']
-                if not iconfilepath.exists():
-                    iconfilepath = args.projectdir / 'temp' / 'generated_icons' / icondef['iconName']
-                    if not iconfilepath.exists():
-                        args.problems.append('Add icon2image: could not find icon {0} for image {1}'.format(icondef['iconName'], imgdef['fileName']))
-                        return
-            icon = cv2.imread(str(iconfilepath), cv2.IMREAD_UNCHANGED)
-        # resize icon
-        # if args.debug:
-        #     print(icon.shape)
-        s = max(icon.shape[0], icon.shape[1])
-        dy = int((icondef['size']*icon.shape[0])/s)
-        dx = int((icondef['size']*icon.shape[1])/s)
-        icon = cv2.resize(icon, (dx,dy), interpolation = cv2.INTER_NEAREST)
-        if args.debug:
-            bwpath = (args.bwdir / icondef['iconName']).with_suffix('')
-            bwpath.parent.mkdir(parents=True, exist_ok=True)           
-            cv2.imwrite(str(bwpath)+'.png', icon)
-
-        if 'rec' in icondef:
-            if args.debug:
-                print('add icon by rect')
-            recID = icondef['rec']
-            if( recID > len(rectangles)):
-                args.problems.append('Add icon2image: icon {0} for image {1} refers to non existing rectangle {2}'.format(icondef['iconName'], imgdef['fileName'], recID))
-                return
-            iconxy = geticonxy(args, imgdef['fileName'], icondef['iconName'], 
-            icon, rectangles[recID-1], icondef['x'], icondef['y'])
-        else:
-            iconxy = (icondef['x'], icondef['y'])
-            if args.debug:
-                print('add icon by position', iconxy)
-
-        img = overlayImageOverImage(img, icon, iconxy, args)
-
-
-    imgiconpath = args.iconsdir / imgdef['fileName']
-    imgiconpath.parent.mkdir(parents=True, exist_ok=True)
-    cv2.imwrite(str(imgiconpath), img)
-
-
 def icons2image(args, imgdef, imgPath, rectangles):
     # add icons to image
     icmd = 'magick -density 1000 ' + imgPath + ' -background none'
@@ -325,7 +266,7 @@ def lines2image(args, lines, img, rectangles):
         yAlign = p[2]
         lastx = int( (1-xAlign)*r[0][0] + xAlign*r[1][0] )
         lasty = int( (1-yAlign)*r[0][1] + yAlign*r[1][1] )
-        coordinates.append([lastx,lasty])
+        coordinates.append((lastx,lasty))
         # img = cv2.circle(img, (lastx, lasty), 10, [0,0,255], 10)
         for p in linepoints[1:]:
             r = rectangles[p[0]-1]
@@ -336,111 +277,111 @@ def lines2image(args, lines, img, rectangles):
             else:
                 # x sa nemeni iba y
                 lasty = int( (1-ratio)*r[0][1] + ratio*r[1][1] )
-            coordinates.append([lastx, lasty])
+            coordinates.append((lastx, lasty))
 
-        linewidth = line['width'] if ('width' in line) else 2
-        arrowsize = line['arrowsize'] if ('arrowsize' in line) else 8
+        linewidth = line['linewidth'] if ('linewidth' in line) else 2
         if args.poster:
             linewidth = int(linewidth * args.poster)
-            arrowsize = int(arrowsize * args.poster)
-
-        linecolor = (line['color'][2], line['color'][1], line['color'][0]) if 'color' in line else (145,44,111)
+        linecolor = (line['linecolor'][2], line['linecolor'][1], line['linecolor'][0]) if 'linecolor' in line else (145,44,111)
         if args.debug:
-            print('linecolor: {0}, linewidth: {1}, arrowsize: {2}'.format(linecolor, linewidth, arrowsize))
+            print('linecolor: {0}, linewidth: {1}'.format(linecolor, linewidth))
         points = np.array([[p[0],p[1]] for p in coordinates], np.int32)
         points = points.reshape((-1,1,2))
         img = cv2.polylines(img, [points], False, linecolor, linewidth)
-        p0 = (lastx, lasty)
-        if p[1] == 'L':
-            p1 = (p0[0]+arrowsize, p0[1]-arrowsize)
-            p2 = (p0[0]+arrowsize, p0[1]+arrowsize)
-        elif p[1] == 'R':
-            p1 = (p0[0]-arrowsize, p0[1]-arrowsize)
-            p2 = (p0[0]-arrowsize, p0[1]+arrowsize)
-        elif p[1] == 'U':
-            p1 = (p0[0]-arrowsize, p0[1]+arrowsize)
-            p2 = (p0[0]+arrowsize, p0[1]+arrowsize)
-        elif p[1] == 'D':
-            p1 = (p0[0]-arrowsize, p0[1]-arrowsize)
-            p2 = (p0[0]+arrowsize, p0[1]-arrowsize)
-        img = cv2.line(img, p0, p1, linecolor, linewidth)
-        img = cv2.line(img, p0, p2, linecolor, linewidth)
-        if img.shape[2] < 4:
-            # no transparency in image
-            x = np.zeros((img.shape[0], img.shape[1], 1), img.dtype)
-            img = np.concatenate((img, x),2)
-        img[:, :, 3] = np.full((img.shape[0], img.shape[1]), 255, np.uint8)
+
+        # koncova sipka
+        if 'arrowsize' in line:
+            arrowsize = line['arrowsize']
+            if args.poster:
+                arrowsize = int(arrowsize * args.poster)
+            if args.debug:
+                print('Draw ending arrow with size: {0}'.format(arrowsize))
+            p0 = coordinates[-1]
+            if p[1] == 'L':
+                p1 = (p0[0]+arrowsize, p0[1]-arrowsize)
+                p2 = (p0[0]+arrowsize, p0[1]+arrowsize)
+            elif p[1] == 'R':
+                p1 = (p0[0]-arrowsize, p0[1]-arrowsize)
+                p2 = (p0[0]-arrowsize, p0[1]+arrowsize)
+            elif p[1] == 'U':
+                p1 = (p0[0]-arrowsize, p0[1]+arrowsize)
+                p2 = (p0[0]+arrowsize, p0[1]+arrowsize)
+            elif p[1] == 'D':
+                p1 = (p0[0]-arrowsize, p0[1]-arrowsize)
+                p2 = (p0[0]+arrowsize, p0[1]-arrowsize)
+            img = cv2.line(img, p0, p1, linecolor, linewidth)
+            img = cv2.line(img, p0, p2, linecolor, linewidth)
+        # zaciatocny kruzok
+        if 'circlesize' in line:
+            circlesize = line['circlesize']
+            if args.poster:
+                circlesize = int(circlesize * args.poster)
+            if args.debug:
+                print('Draw starting circle with size  {0}'.format(circlesize))
+            p0 = coordinates[0]
+            img = cv2.circle(img, p0, circlesize, linecolor, -1)
     return img
 
-def polygon2image(args, imgdef, img, rectangles):
-    linewidth = imgdef['linewidth'] if ('linewidth' in imgdef) else 2
-    linecolor = (imgdef['linecolor'][2], imgdef['linecolor'][1], imgdef['linecolor'][0]) if 'linecolor' in imgdef else (145,44,111)
-    border = imgdef['border']  if 'border' in imgdef else 8
+def polygonpoints(args, polygon, rectangles):
+    border = polygon['border']  if 'border' in polygon else 8
     if args.poster:
         border = int(border * args.poster)
-        linewidth = int(linewidth * args.poster)
-    opacity   = imgdef['opacity'] if 'opacity' in imgdef else 80
-    if args.debug:
-        print('linecolor: {0}, linewidth: {1}, opacity: {2}, border: {3}'.format(linecolor, linewidth, opacity, border))
-
     # identify bounding polygons for areas
     points = []
-    if 'polygon' in imgdef:
-        for p in imgdef['polygon']:
-            r = rectangles[p[0]-1]
-            top = p[1][0] == 'T'
-            left = p[1][1] == 'L'
-            x = (r[0][0]-border) if left else (r[1][0]+border)
-            y = (r[0][1]-border) if top  else (r[1][1]+border)
-            points.append([x,y])
-    if 'simplerect' in imgdef:
-        sr = imgdef['simplerect']
-        r = rectangles[sr[0]-1]
-        x1 = r[0][0]-border
-        y1 = r[0][1]-border
-        r = rectangles[sr[1]-1]
-        x2 = r[1][0]+border
-        y2 = r[1][1]+border
-        points.append([x1,y1])
-        points.append([x2,y1])
-        points.append([x2,y2])
-        points.append([x1,y2])
+    for p in polygon['points']:
+        r = rectangles[p[0]-1]
+        istop = p[1][0] == 'T'
+        isleft = p[1][1] == 'L'
+        x = (r[0][0]-border) if isleft else (r[1][0]+border)
+        y = (r[0][1]-border) if istop  else (r[1][1]+border)
+        if points:
+            prev = points[-1]
+            if abs(prev[0]-x) < (2*border):
+                x = prev[0]
+            if abs(prev[1]-y) < (2*border):
+                y = prev[1]
+        points.append([x,y])
+    points.append(points[0])
+    return points
 
-    polygon = []
-    if ('polygon' in imgdef) or ('simplerect' in imgdef):
-        for p in points:
-            x = p[0]
-            y = p[1]
-            if polygon:
-                prev = polygon[-1]
-                if abs(prev[0]-x) < (2*border):
-                    x = prev[0]
-                if abs(prev[1]-y) < (2*border):
-                    y = prev[1]
-            polygon.append((x,y))
-        polygon.append(polygon[0])
-        # for polygon in polygon:
-        points = np.array([[p[0],p[1]] for p in polygon], np.int32)
-        points = points.reshape((-1,1,2))
-        # draw red polygon
-        img = cv2.polylines(img, [points], True, linecolor, linewidth)
-        if args.debug:
-            print(polygon)
+def rectpoints(args, rectarea, rectangles):
+    border = rectarea['border']  if 'border' in rectarea else 8
+    if args.poster:
+        border = int(border * args.poster)
+    points = []
+    sr = rectarea['corners']
+    r = rectangles[sr[0]-1]
+    x1 = r[0][0]-border
+    y1 = r[0][1]-border
+    r = rectangles[sr[1]-1]
+    x2 = r[1][0]+border
+    y2 = r[1][1]+border
+    points.append([x1,y1])
+    points.append([x2,y1])
+    points.append([x2,y2])
+    points.append([x1,y2])
+    return points
 
-    # add transparency to image
+def polygon2image(args, points, area, img):
+    linewidth = area['linewidth'] if ('linewidth' in area) else 2
+    linecolor = (area['linecolor'][2], area['linecolor'][1], area['linecolor'][0]) if 'linecolor' in area else (145,44,111)
+    opacity   = area['opacity'] if 'opacity' in area else 80
+    if args.poster:
+        linewidth = int(linewidth * args.poster)
+    if args.debug:
+        print('linecolor: {0}, linewidth: {1}, opacity: {2}'.format(linecolor, linewidth, opacity))
+
+    points = np.array([[p[0],p[1]] for p in points], np.int32)
+    points = points.reshape((-1,1,2))
+    # draw polygon
+    img = cv2.polylines(img, [points], True, linecolor, linewidth)
+    if args.debug:
+        print(points)
+
+    # add mask opacity
     mask = np.full((img.shape[0], img.shape[1]), opacity, np.uint8)
     mask = cv2.fillPoly(mask, [points], 255)
-    # print('orig shape', img.shape)
-    if img.shape[2] < 4:
-        # no transparency in image
-        x = np.zeros((img.shape[0], img.shape[1], 1), img.dtype)
-        # print('x shape', x.shape)
-        img = np.concatenate((img, x),2)
-        # img = np.hstack((img, x))
-        # print('add transparency shape', img.shape)
-        # print('mask shape', mask.shape)      
     img[:, :, 3] = mask
-    # print('final shape', img.shape)
     return img
 
 def areas2image(args, imgdef, img, rectangles):
@@ -449,12 +390,26 @@ def areas2image(args, imgdef, img, rectangles):
     if imgpath.exists():
         img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
 
+    if args.verbose:
+        print('process areas with extension', imgdef['ext'])
+
+    # if args.debug:
+    #     print(img.shape)
+    #     print(img[:, :, 3])
+    if img.shape[2] < 4:
+        # no transparency in image
+        x = np.full((img.shape[0], img.shape[1]), 255, np.uint8)
+        img = np.concatenate((img, x),2)
+
     if 'lines' in imgdef:
         img = lines2image(args, imgdef['lines'], img, rectangles)
+    if 'polygon' in imgdef:
+        points = polygonpoints(args, imgdef['polygon'], rectangles)
+        img = polygon2image(args, points, imgdef['polygon'], img)
+    if 'rect-area' in imgdef:
+        points = rectpoints(args, imgdef['rect-area'], rectangles)
+        img = polygon2image(args, points, imgdef['rect-area'], img)
 
-    if ('polygon' in imgdef) or ('simplerect' in imgdef):
-        img = polygon2image(args, imgdef, img, rectangles)
-
-    imgpath = args.areasdir / imgdef['fileName'].replace('.png', '_{0}.png'.format(imgdef['focus-name']))
+    imgpath = args.areasdir / imgdef['fileName'].replace('.png', '_{0}.png'.format(imgdef['ext']))
     imgpath.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(imgpath), img)

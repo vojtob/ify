@@ -22,9 +22,9 @@ Základné funkcie programu:
 Táto časť je spoločná aj pre ikony aj pre oblasti
 1. Obrázok sa skonvertuje do čiernobieleho, lebo tam sa veci ľahšie identifikujú. Tu sa môže nastaviť atribút `treshold`, že čo už je biele a čo ešte čierne
 2. Potom sa hľadajú obdĺžniky, použijú sa tieto parametre:
-   1. **corner** - ak je oblý roh (services), tak chýba, toto hovorí aký veľký roh môže chýbať
-   2. **gap** - medzera menej ako toľkoto bodov sa nepovažuje za medzeru
-   3. **segment** - čiara kratšia ako toto sa nepovažuje za čiaru
+   1. `corner` - ak je oblý roh (services), tak chýba, toto hovorí aký veľký roh môže chýbať
+   2. `gap` - medzera menej ako toľkoto bodov sa nepovažuje za medzeru
+   3. `segment` - čiara kratšia ako toto sa nepovažuje za čiaru
 3. Pri hľadaní sa vytvárajú obrázky, kde sa doplnia identifikované obdĺžniky a ukladá ich do adresára `temp/img_rec`, musí byť zapnutý debug logging. Sú tu znázornené čísla obdĺžnikov
 
 ## Ikony
@@ -60,44 +60,48 @@ Táto časť je spoločná aj pre ikony aj pre oblasti
 
 ## Oblasti
 
-1. focus-name sa pridá do názvu obrázku, na ktorom bude zvýraznená časť
-2. Najprv je číslo obdĺžnika a potom identifikácia jedného z jeho rohov **T**op, **B**ottom, **L**eft, **R**ight
-3. `border` je hodnota, ako veľmi sa ohraničujúca čiara odsadí od obdĺžnikov
-4. `linecolor`, `linewidth` určuje farbu a šírku čiary
-5. `opacity` ako veľmi je priesvitná ostatná časť
+1. `ext` sa pridá do názvu obrázku, na ktorom bude zvýraznená časť
+2. Sú tri druhy vecí, ktoré tu robím:
+   1. `rect-area` - zvýraznenie oblasti cez jednoduchý obdĺžnik
+   2. `polygon` - zvýraznenie oblasti cez polygon
+   3. `lines` - dokreslovanie čiar pre zvýrazňovanie tokov
+3. Spoločné parametre
+   1. `linecolor`, `linewidth` určuje farbu a šírku čiary, týka sa všetkých
+4. Pre rect-area a polygon
+   1. `border` je hodnota, ako veľmi sa ohraničujúca čiara odsadí od obdĺžnikov
+   2. `opacity` ako veľmi je priesvitná ostatná časť
+   3. polygon obsahuje ešte `points`. Najprv je číslo obdĺžnika a potom identifikácia jedného z jeho rohov **T**op, **B**ottom, **L**eft, **R**ight
+   4. rect-area obsahuje `coordinates` čo je ľavý horný a pravý dolný obdĺžnik ktoré určia ohraničenie
+5. Lines je zoznam čiar, každá s hrúbkou a farbou. 
+   1. Obsahuje `points` ktoré definujú odkiaľ kam čiara ide. 
+   2. Prvý hovorí o umiestnení začiatku. Najprv id obdĺžnika, potom poloha v rámci neho
+   3. Druhý (a každý ďalší) hovorí, ktorým smerom (iba T/D/L/R takže kolmo), do ktorého obdĺžnika a tam pozícia v smere ktorý sa mení, druhá súradnica sa preberie. ```json [[rectID, x, y], [direction, rectID, position], [direction, rectID, position], ...```
+   4. Ešte je tam `arrowsize` ktorá určuje či je na konci šípka a aká je veľká.
+   5. Ešte je tam `circlesize` ktorá určuje či je na začiatku krúžok a aký veľký.
 
 ```json
 [
-    { "fileName": "02-Application/00-HighLevelAA.png", "treshold" : 135, "focus-name":"01-ziskanie", "polygon": [
-        [3, "TL"], [3, "TR"], [7, "BR"], [5, "BL"]
-    ]},
-    { "fileName": "02-Application/00-HighLevelAA.png", "treshold" : 135, "focus-name":"02-prezeranie", "polygon": [
-        [1, "TL"], [3, "TR"], [3, "BR"], [3, "BL"], [2, "BR"], [2, "BL"], [4, "BR"], [4, "BL"]
-    ]}
-]
-```
-Ak chcem oblasť iba ako jednoduchý obdĺžnik, tak sa to dá jednoduchšie
-
-```json
-[
-    { "fileName": "02-Application/01-AA-functions.png", "treshold" : 135, "focus-name":"01-obcan", "simplerect": [1, 11]},
-]
-```
-
-## Ciary
-
-Prvý hovorí o umiestnení začiatku. Najprv id obdĺžnika, potom poloha v rámci neho
-Druhý (a každý ďalší) hovorí, ktorým smerom (iba T/D/L/R takže kolmo), do ktorého obdĺžnika a tam pozícia v smere ktorý sa mení, druhá súradnica sa preberie.
-
-```json
-[
-    { "fileName": "02-Application/01-AA-functions.png", "treshold" : 135, "focus-name":"01-obcan", 
+    { "fileName": "02-Application/01-AA-functions.png", "ext":"01-obcan", 
+        "rect-area": {"corners" : [1, 11]}
+    },
+    { "fileName": "02-Application/01-AA-functions.png", "ext":"11-nacitanie", 
+        "rect-area": {"opacity" : 30, "linecolor" : [99,102,106], "corners" : [3, 12]},
         "lines": [
-            [[rectID, x, y], [direction, rectID, position], [direction, rectID, position], [direction, rectID, position]],
-            [[4, 0.5, 0.5], ["L", 3, 0.5], ["D", 12, 0.5]]
+            {"linewidth": 6, "arrowsize":12, "points" : [[ 4, 0.2, 0.5], [3, "L", 0.5], [12, "D", 0.6]]}
         ]
     },
-]
+    { "fileName": "02-Application/01-AA-functions.png", "ext":"12-prezeranie", 
+        "polygon": {"opacity" : 30, "linecolor" : [99,102,106], "points":[[1, "TL"], [2, "TR"], [12, "TL"], [12, "TR"], [12, "BR"], [2, "BL"], [7, "BR"], [7, "BL"]]},
+        "lines": [
+            {"linewidth": 6, "arrowsize":12, "points" : [[12, 0.2, 0.5], [2, "L", 0.5], [2, "U", 0.15], [1, "L", 0.5]]}
+        ]
+    },
+    { "fileName": "02-Application/01-AA-functions.png", "ext":"15-adhoc-poskytnutie2", 
+        "polygon": {"opacity" : 30, "linecolor" : [99,102,106], "points" : [[1, "TL"], [2, "TR"], [12, "TL"], [12, "TR"], [12, "BR"], [11, "BL"]]},
+        "lines": [
+            {"linewidth": 6, "arrowsize":12, "circlesize":12, "points" : [[7, 0.5, 0.3], [1, "U", 0.8], [2, "R", 0.2], [2, "D", 0.78], [11, "L", 0.8]]},
+            {"linewidth": 6, "arrowsize":12, "points" : [[12, 0.1, 0.26], [2, "L", 0.8], [2, "U", 0.1], [1, "L", 0.25], [7, "D", 0.3]]},
+            {"linewidth": 6, "arrowsize":12, "points" : [[2, 0.5, 0.85], [11, "L", 0.8]]}
+        ]
+    },
 ```
-
-
