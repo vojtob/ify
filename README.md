@@ -30,7 +30,8 @@ Táto časť je spoločná aj pre ikony aj pre oblasti
 ## Ikony
 
 1. `x` môže nadobúdať hodnoty `left`, `center`, `right` alebo číslo. Ak je to číslo (zväčša od 0 po 1), tak určuje ako ďaleko sa ikona umiestni zľava doprava. Podobne je to pri `y`, akurát hodnoty sú `top`, `center`, `bottom`
-2. Ak definícia ikony neobsahuje atribút `rec`, tak sa očakáva, že `x,y` budú konkrétne pixels, priamo sa preberú.
+2. Ak definícia ikony neobsahuje atribút `rec`, tak sa očakáva, že `x,y` sa budú brať voči celému obrázku
+3. Ak definícia ikony neobsahuje atribút `rec`, a nie je tam ani `x`, `y`, tak sa predpokladá, že sú zadané pixels, ktoré priamo sa preberú  v atribútoch `absx`, `absy`.
 
 ```json
 [

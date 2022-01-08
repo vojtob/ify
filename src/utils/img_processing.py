@@ -13,6 +13,7 @@ import utils.rect_recognition as rr
 BW_TRESHOLD = 135
 
 def convertImage(img, imgdef, args):
+    "convert input image into BW"
     if len(img.shape) > 2:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     else:
@@ -162,13 +163,16 @@ def __processdef(args, what, imgdef):
     if args.debug:
         print('whole image path:', imgpath)
     img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
-    rectangles = imgrectangles(img, imgdef, args)
+    if what != 'test':
+        rectangles = imgrectangles(img, imgdef, args)
 
     if what == 'icons':
         # icons2image(args, imgdef, img, rectangles)
-        icons2image(args, imgdef, str(imgpath), rectangles)
+        icons2image(args, imgdef, str(imgpath), rectangles, img)
     elif what == 'areas':
         areas2image(args, imgdef, img, rectangles)
+    elif what == 'test':
+        test(args, imgdef, img)
     else:
         args.problems.append('do not know what to add ' + what)
 
@@ -209,7 +213,7 @@ def add_decorations(args, what):
         print('file {0} not found for {1}'.format(args.file, what))
         args.problems.append('file {0} not found for {1}'.format(args.file, what))
 
-def icons2image(args, imgdef, imgPath, rectangles):
+def icons2image(args, imgdef, imgPath, rectangles, img):
     # add icons to image
     icmd = 'magick -density 1000 ' + imgPath + ' -background none'
     
@@ -243,7 +247,10 @@ def icons2image(args, imgdef, imgPath, rectangles):
         else:
             if args.debug:
                 print('add icon by position', iconxy)
-            iconxy = (icondef['x'], icondef['y'])
+            iconxy = geticonxy(args, imgdef['fileName'], icondef['iconName'], 
+                iconsize, [[0,0],[img.shape[1], img.shape[0]]], icondef['x'], icondef['y'])
+
+            # iconxy = (icondef['asbx'], icondef['absy'])
 
         icon_cmd = '( {iconpath} -resize {iconsize}x{iconsize} ) -gravity NorthWest -geometry +{x}+{y} -composite'.format(
             iconpath=iconfilepath, iconsize=iconsize, x=iconxy[0], y=iconxy[1])
@@ -335,11 +342,12 @@ def polygonpoints(args, polygon, rectangles):
         x = (r[0][0]-border) if isleft else (r[1][0]+border)
         y = (r[0][1]-border) if istop  else (r[1][1]+border)
         if points:
-            prev = points[-1]
-            if abs(prev[0]-x) < (2*border):
-                x = prev[0]
-            if abs(prev[1]-y) < (2*border):
-                y = prev[1]
+            # prev = points[-1]
+            for prev in points:
+                if abs(prev[0]-x) < (2*border):
+                    x = prev[0]
+                if abs(prev[1]-y) < (2*border):
+                    y = prev[1]
         points.append([x,y])
     points.append(points[0])
     return points
@@ -413,3 +421,23 @@ def areas2image(args, imgdef, img, rectangles):
     imgpath = args.areasdir / imgdef['fileName'].replace('.png', '_{0}.png'.format(imgdef['ext']))
     imgpath.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(imgpath), img)
+
+def test(args, imgdef, img):
+    if len(img.shape) > 2:
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = img
+
+    # treshold = int(imgdef['treshold']) if 'treshold' in imgdef else BW_TRESHOLD
+    # if args.debug:
+    #     print('treshold', treshold)
+    # thresh = cv2.threshold(gray, treshold, 255, cv2.THRESH_BINARY_INV)[1]
+
+    # edges = cv2.Canny(thresh,100,200)
+    edges = cv2.Canny(gray,0,1)
+
+    tpath = args.destdir / '_test' / imgdef['fileName']
+    tpath.parent.mkdir(parents=True, exist_ok=True)           
+    cv2.imwrite(str(tpath), edges)
+
+    return

@@ -1,7 +1,6 @@
 import argparse
 from pathlib import PureWindowsPath, Path
 import shutil
-import subprocess
 
 from utils import convert, img_processing
 
@@ -69,6 +68,9 @@ if __name__ == '__main__':
     parser_mermaid = subparsers.add_parser('mermaid', help='mermaid images -> png')
     parser_mermaid.set_defaults(command='mermaid')
 
+    parser_mermaid = subparsers.add_parser('test', help='pre testovanie novej funkcionality')
+    parser_mermaid.set_defaults(command='test')
+
     # parser_publish = subparsers.add_parser('publish', help='publish image files')
     # parser_publish.set_defaults(command='publish')
 
@@ -118,7 +120,13 @@ if __name__ == '__main__':
         log(args, 'start areas')
         img_processing.add_decorations(args, 'areas')
         log(args, 'done areas')
-    
+
+    if (args.command=='test'):
+        log(args, 'start test')
+        # test functionality
+        img_processing.add_decorations(args, 'test')
+        log(args, 'done test')
+
     if args.command !='clean':
         # if (args.command=='publish') or (args.command=='all'):
         log(args, 'start merging images')
