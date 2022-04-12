@@ -223,12 +223,14 @@ def icons2image(args, imgdef, imgPath, rectangles, img):
         # find icon file
         iconfilepath = args.iconssourcedir / icondef['iconName']
         if not iconfilepath.exists():
-            iconfilepath = args.iconssourcedir / 'generated' / icondef['iconName']
-            if not iconfilepath.exists():
-                iconfilepath = args.projectdir / 'temp' / 'generated_icons' / icondef['iconName']
-                if not iconfilepath.exists():
-                    args.problems.append('Add icon2image: could not find icon {0} for image {1}'.format(icondef['iconName'], imgdef['fileName']))
-                    return
+            args.problems.append('Add icon2image: could not find icon {0} for image {1}'.format(icondef['iconName'], imgdef['fileName']))
+            return
+            # iconfilepath = args.iconssourcedir / 'generated' / icondef['iconName']
+            # if not iconfilepath.exists():
+            #     iconfilepath = args.projectdir / 'temp' / 'generated_icons' / icondef['iconName']
+            #     if not iconfilepath.exists():
+            #         args.problems.append('Add icon2image: could not find icon {0} for image {1}'.format(icondef['iconName'], imgdef['fileName']))
+            #         return
 
         iconsize = icondef['size']
         if args.poster:
@@ -252,7 +254,7 @@ def icons2image(args, imgdef, imgPath, rectangles, img):
 
             # iconxy = (icondef['asbx'], icondef['absy'])
 
-        icon_cmd = '( {iconpath} -resize {iconsize}x{iconsize} ) -gravity NorthWest -geometry +{x}+{y} -composite'.format(
+        icon_cmd = '( "{iconpath}" -resize {iconsize}x{iconsize} ) -gravity NorthWest -geometry +{x}+{y} -composite'.format(
             iconpath=iconfilepath, iconsize=iconsize, x=iconxy[0], y=iconxy[1])
         icmd = icmd + ' ' + icon_cmd
 
