@@ -106,22 +106,26 @@ def overlayImageOverImage(bigImg, smallImage, smallImageOrigin, args):
     return bigImg
 
 def geticonxy(args, filename, iconfilepath, iconname, dicon, rectangle, xAlign, yAlign, marginSize=5):
-    if args.debug:
-        print("read icon to aquire size:", iconfilepath)
-    tree = ET.parse(iconfilepath)
-    root = tree.getroot()
-    vb = list(map(float, root.attrib['viewBox'].split()))
-    if args.debug:
-        print(vb)
-    dx = vb[2]-vb[0]
-    dy = vb[3]-vb[1]
-    q = dicon / max(dx,dy)
-    if args.debug:
-        print("icon size:", dx, dy, q)
-    dx = int(q*dx)
-    dy = int(q*dy)
-    if args.debug:
-        print("icon size:", dx, dy)
+    if str(iconfilepath).endswith('.svg'):
+        if args.debug:
+            print("read icon to aquire size:", iconfilepath)
+        tree = ET.parse(iconfilepath)
+        root = tree.getroot()
+        vb = list(map(float, root.attrib['viewBox'].split()))
+        if args.debug:
+            print(vb)
+        dx = vb[2]-vb[0]
+        dy = vb[3]-vb[1]
+        q = dicon / max(dx,dy)
+        if args.debug:
+            print("icon size:", dx, dy, q)
+        dx = int(q*dx)
+        dy = int(q*dy)
+        if args.debug:
+            print("icon size:", dx, dy)
+    else:
+        dx = dicon
+        dy = dicon
     
 
     # calculate x position of icon
@@ -265,7 +269,7 @@ def icons2image(args, imgdef, imgPath, rectangles, img):
         else:
             if args.debug:
                 print('add icon by position', iconxy)
-            iconxy = geticonxy(args, imgdef['fileName'], icondef['iconName'], 
+            iconxy = geticonxy(args, imgdef['fileName'], iconfilepath, icondef['iconName'], 
                 iconsize, [[0,0],[img.shape[1], img.shape[0]]], icondef['x'], icondef['y'], iconfilepath)
 
             # iconxy = (icondef['asbx'], icondef['absy'])
