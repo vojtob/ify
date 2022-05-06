@@ -6,7 +6,8 @@ import json
 import numpy as np
 import cv2
 from numpy.lib.shape_base import apply_along_axis
-from cairosvg import svg2png
+# from cairosvg import svg2svg
+import xml.etree.ElementTree as ET
 
 import utils.rect_recognition as rr
 
@@ -104,24 +105,39 @@ def overlayImageOverImage(bigImg, smallImage, smallImageOrigin, args):
 
     return bigImg
 
-def geticonxy(args, filename, iconname, dicon, rectangle, xAlign, yAlign, marginSize=5):
-    # dx = icon.shape[1]
-    # dy = icon.shape[0]
+def geticonxy(args, filename, iconfilepath, iconname, dicon, rectangle, xAlign, yAlign, marginSize=5):
+    if args.debug:
+        print("read icon to aquire size:", iconfilepath)
+    tree = ET.parse(iconfilepath)
+    root = tree.getroot()
+    vb = list(map(float, root.attrib['viewBox'].split()))
+    if args.debug:
+        print(vb)
+    dx = vb[2]-vb[0]
+    dy = vb[3]-vb[1]
+    q = dicon / max(dx,dy)
+    if args.debug:
+        print("icon size:", dx, dy, q)
+    dx = int(q*dx)
+    dy = int(q*dy)
+    if args.debug:
+        print("icon size:", dx, dy)
+    
 
     # calculate x position of icon
     if(xAlign == 'left'):
         x = rectangle[0][0] + marginSize
     elif(xAlign == 'right'):
-        # x = rectangle[1][0] - dx - marginSize
-        x = rectangle[1][0] - dicon - marginSize
+        x = rectangle[1][0] - dx - marginSize
+        # x = rectangle[1][0] - dicon - marginSize
     elif (xAlign == 'center'):
-        # x = (rectangle[1][0]+rectangle[0][0]-dx) // 2
-        x = (rectangle[1][0]+rectangle[0][0]-dicon) // 2
+        x = (rectangle[1][0]+rectangle[0][0]-dx) // 2
+        # x = (rectangle[1][0]+rectangle[0][0]-dicon) // 2
     else:
         # relative
         try:
-            # x = int( (1-xAlign)*rectangle[0][0] + xAlign*rectangle[1][0] - dx/2 )
-            x = int( (1-xAlign)*rectangle[0][0] + xAlign*rectangle[1][0] - dicon/2 )
+            x = int( (1-xAlign)*rectangle[0][0] + xAlign*rectangle[1][0] - dx/2 )
+            # x = int( (1-xAlign)*rectangle[0][0] + xAlign*rectangle[1][0] - dicon/2 )
         except:
             args.problems.append('icon {0} in image {1} has bad x align !!!!!!!'.format(iconname, filename))
             print('       icon x align bad format !!!!!!!')
@@ -131,17 +147,17 @@ def geticonxy(args, filename, iconname, dicon, rectangle, xAlign, yAlign, margin
     if(yAlign == 'top'):
         y = rectangle[0][1] + marginSize
     elif(yAlign == 'bottom'):
-        # y = rectangle[1][1] - dy - marginSize
-        y = rectangle[1][1] - dicon - marginSize
+        y = rectangle[1][1] - dy - marginSize
+        # y = rectangle[1][1] - dicon - marginSize
     elif (yAlign == 'center'):
-        # y = (rectangle[1][1]+rectangle[0][1]-dy) // 2
-        y = (rectangle[1][1]+rectangle[0][1]-dicon) // 2
+        y = (rectangle[1][1]+rectangle[0][1]-dy) // 2
+        # y = (rectangle[1][1]+rectangle[0][1]-dicon) // 2
     else:
         # relative
         try:
             pass
-            # y = int( (1-yAlign)*rectangle[0][1] + yAlign*rectangle[1][1] - dy/2 )
-            y = int( (1-yAlign)*rectangle[0][1] + yAlign*rectangle[1][1] - dicon/2 )
+            y = int( (1-yAlign)*rectangle[0][1] + yAlign*rectangle[1][1] - dy/2 )
+            # y = int( (1-yAlign)*rectangle[0][1] + yAlign*rectangle[1][1] - dicon/2 )
         except:
             args.problems.append('icon {0} in image {1} has bad y align !!!!!!!'.format(iconname, filename))
             print('       icon y align bad format !!!!!!!!')
@@ -244,13 +260,13 @@ def icons2image(args, imgdef, imgPath, rectangles, img):
             if( recID > len(rectangles)):
                 args.problems.append('Add icon2image: icon {0} for image {1} refers to non existing rectangle {2}'.format(icondef['iconName'], imgdef['fileName'], recID))
                 return
-            iconxy = geticonxy(args, imgdef['fileName'], icondef['iconName'], 
+            iconxy = geticonxy(args, imgdef['fileName'], iconfilepath, icondef['iconName'], 
                 iconsize, rectangles[recID-1], icondef['x'], icondef['y'])
         else:
             if args.debug:
                 print('add icon by position', iconxy)
             iconxy = geticonxy(args, imgdef['fileName'], icondef['iconName'], 
-                iconsize, [[0,0],[img.shape[1], img.shape[0]]], icondef['x'], icondef['y'])
+                iconsize, [[0,0],[img.shape[1], img.shape[0]]], icondef['x'], icondef['y'], iconfilepath)
 
             # iconxy = (icondef['asbx'], icondef['absy'])
 
@@ -363,9 +379,13 @@ def rectpoints(args, rectarea, rectangles):
     r = rectangles[sr[0]-1]
     x1 = r[0][0]-border
     y1 = r[0][1]-border
-    r = rectangles[sr[1]-1]
     x2 = r[1][0]+border
     y2 = r[1][1]+border
+    r = rectangles[sr[1]-1]
+    x1 = min(x1, r[0][0]-border)
+    y1 = min(y1, r[0][1]-border)
+    x2 = max(x2, r[1][0]+border)
+    y2 = max(y2, r[1][1]+border)
     points.append([x1,y1])
     points.append([x2,y1])
     points.append([x2,y2])
