@@ -68,6 +68,9 @@ if __name__ == '__main__':
     parser_mermaid = subparsers.add_parser('mermaid', help='mermaid images -> png')
     parser_mermaid.set_defaults(command='mermaid')
 
+    parser_plantuml = subparsers.add_parser('plantuml', help='plantUML images -> svg')
+    parser_plantuml.set_defaults(command='plantUML')
+
     parser_mermaid = subparsers.add_parser('test', help='pre testovanie novej funkcionality')
     parser_mermaid.set_defaults(command='test')
 
@@ -93,6 +96,12 @@ if __name__ == '__main__':
                 if args.verbose:
                     print('delete', p)
         log(args, 'done cleaning')
+
+    if (args.command=='plantUML'):
+        log(args, 'start plantUML conversion into SVG')
+        # convert from mmd to png
+        convert.convert_plantuml(args)
+        log(args, 'done plantUML conversion')
 
     if (args.command=='svg') or (args.command=='all'):
         log(args, 'start svg conversion')

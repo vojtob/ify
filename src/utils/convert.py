@@ -52,6 +52,17 @@ def onfile_convert_mmd(args, fromfile, tofile, orig_extension, new_extension):
         print(cmd)
     subprocess.run(cmd, shell=True)
 
+def onfile_convert_plantuml(args, fromfile, tofile, orig_extension, new_extension):
+    # mmPath = os.path.join('C:/', 'prg', 'mermaid', 'node_modules', 'mermaid.cli', 'index.bundle.js')
+    pupath = str(Path('C:/ProgramData/chocolatey/lib/plantuml/tools/plantuml.jar'))
+    # pucmd = 'java -jar {p} -tsvg {srcfile}'
+    # cmd = pucmd.format(srcfile=fromfile, p=pupath)
+    pucmd = 'cat {srcfile} | java -jar {p} -tsvg -pipe > {destfile}'
+    cmd = pucmd.format(srcfile=fromfile, destfile=tofile, p=pupath)
+    if args.debug:
+        print(cmd)
+    subprocess.run(cmd, shell=True)
+
 def convert_svg(args):
     # convert svg files to png files
     __img_walk(args, 
@@ -86,6 +97,13 @@ def convert_mmd(args):
     __img_walk(args, 
         args.sourcedir, args.exporteddir, 
         '.mmd', '.png', onfile_convert_mmd)
+
+def convert_plantuml(args):
+    # convert plantUML files to SVG files
+    # args.problems.append('mermaid NOT ACTIVATED')
+    __img_walk(args, 
+        args.sourcedir, args.svgdir, 
+        '.puml', '.svg', onfile_convert_plantuml)
 
 def mycopy(source_directory, destination_directory, args, ingore_dot_folders=True, onfile=None):
     """ copy files from source to destination
