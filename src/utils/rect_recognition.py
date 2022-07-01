@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 # import docool.images.image_utils as image_utils
 
+aligngap = 3
+
 def addPointToSegments(lineSegments, keyCoordinate, lenCoordinate, reallySmallGap, minSegmentLength):
     """ add a point to segments """
 
@@ -188,6 +190,26 @@ def findRectangles(lineSegmentsHorizontal, lineSegmentsVertical, cornerGap):
 
     return rectangles
 
+def __alignrectpurge(sides):
+    """try to align sides, stotozni dve hrany ak sa lisia o menej ako aligngap"""
+    sides = sorted(sides)
+    # print('sorted sides ', sides)
+    isaligned = False
+    while not isaligned:
+        isaligned = True
+        aligned = [sides[0]]
+        for i in range(1, len(sides)):
+            # print('check ', sides[i])
+            if (sides[i-1]+aligngap) < sides[i]:
+                aligned.append(sides[i])
+                # print('added')
+            else:
+                isaligned = False
+                # print('purged')
+        sides = aligned
+        # print('purged sides ', sides)
+    return sides
+
 def getRectangles(args, imgBW, imgdef):
     really_small_gap   = int(imgdef['gap'])     if 'gap'     in imgdef else 3
     min_segment_length = int(imgdef['segment']) if 'segment' in imgdef else 30
@@ -217,6 +239,40 @@ def getRectangles(args, imgBW, imgdef):
     #            print(y)
 
     rectangles = findRectangles(lineSegmentsHorizontal, lineSegmentsVertical, corner_gap)
-    # for i,r in enumerate(rectangles):
-    #     print(i+1, r)
-    return rectangles
+    # align rectangles
+    leftsides = set()
+    topsides = set()
+    for r in rectangles:
+        leftsides.add(r[0][0])
+        topsides.add(r[0][1])
+    leftsides = __alignrectpurge(leftsides)
+    # print(leftsides)
+    topsides = __alignrectpurge(topsides)
+    # print(topsides)
+
+    alignedrects = []
+    for r in rectangles:
+        arx = r[0][0]
+        ary = r[0][1]
+        if r[0][0] not in leftsides:
+            # left side should be aligned
+            for x in leftsides:
+                if abs(x - r[0][0]) < aligngap:
+                    arx = x
+                    break
+        if r[0][1] not in topsides:
+            # left side should be aligned
+            for y in topsides:
+                if abs(y - r[0][1]) < aligngap:
+                    ary = y
+                    break
+        alignedrects.append(((arx, ary), r[1]))
+    
+    # sort aligned rects 
+    alignedrects.sort(key = lambda x: x[0][1]*100000+x[0][0])
+    if args.debug:
+        for i,r in enumerate(alignedrects):
+            print(i+1, r)
+            print(i+1, rectangles[i])
+    
+    return alignedrects
