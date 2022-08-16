@@ -62,6 +62,12 @@ if __name__ == '__main__':
     parser_svg = subparsers.add_parser('svg', help='conver from svg to png')
     parser_svg.set_defaults(command='svg')
 
+    parser_svg = subparsers.add_parser('cpsvg', help='copy svg in source to svg in dest')
+    parser_svg.set_defaults(command='cpsvg')
+
+    parser_svg = subparsers.add_parser('cppng', help='copy png in source to png in dest')
+    parser_svg.set_defaults(command='cppng')
+
     parser_umlet = subparsers.add_parser('umlet', help='umlet -> png')
     parser_umlet.set_defaults(command='umlet')
 
@@ -102,6 +108,16 @@ if __name__ == '__main__':
         # convert from mmd to png
         convert.convert_plantuml(args)
         log(args, 'done plantUML conversion')
+
+    if (args.command=='cpsvg') or (args.command=='all'):
+        log(args, 'start copy svg')
+        convert.copy_svg(args)
+        log(args, 'done svg copy')
+
+    if (args.command=='cppng') or (args.command=='all'):
+        log(args, 'start copy png')
+        convert.copy_png(args)
+        log(args, 'done png copy')
 
     if (args.command=='svg') or (args.command=='all'):
         log(args, 'start svg conversion')

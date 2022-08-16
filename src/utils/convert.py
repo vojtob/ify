@@ -1,3 +1,4 @@
+from copy import copy
 import os
 from pathlib import PureWindowsPath, Path
 import subprocess
@@ -63,8 +64,26 @@ def onfile_convert_plantuml(args, fromfile, tofile, orig_extension, new_extensio
         print(cmd)
     subprocess.run(cmd, shell=True)
 
+def onfile_convert_copy(args, fromfile, tofile, orig_extension, new_extension):
+    shutil.copy(fromfile, tofile)
+
+def copy_svg(args):
+    # copy svg files from source to dest
+    __img_walk(args, 
+        args.sourcedir, args.svgdir, 
+        '.svg', '.svg', onfile_convert_copy)
+
+def copy_png(args):
+    # copy png files from source to dest
+    __img_walk(args, 
+        args.sourcedir, args.exporteddir, 
+        '.png', '.png', onfile_convert_copy)
+
 def convert_svg(args):
     # convert svg files to png files
+    # __img_walk(args, 
+    #     args.sourcedir, args.svgdir, 
+    #     '.svg', '.svg', onfile_convert_copy)
     __img_walk(args, 
         args.svgdir, args.exporteddir, 
         '.svg', '.png', onfile_convert_svg)
