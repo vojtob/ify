@@ -437,12 +437,19 @@ def areas2image(args, imgdef, img, rectangles):
 
     if 'lines' in imgdef:
         img = lines2image(args, imgdef['lines'], img, rectangles)
-    if 'polygon' in imgdef:
-        points = polygonpoints(args, imgdef['polygon'], rectangles)
-        img = polygon2image(args, points, imgdef['polygon'], img)
-    if 'rect-area' in imgdef:
-        points = rectpoints(args, imgdef['rect-area'], rectangles)
-        img = polygon2image(args, points, imgdef['rect-area'], img)
+    # if 'polygon' in imgdef:
+    #     points = polygonpoints(args, imgdef['polygon'], rectangles)
+    #     img = polygon2image(args, points, imgdef['polygon'], img)
+    # if 'rect-area' in imgdef:
+    #     points = rectpoints(args, imgdef['rect-area'], rectangles)
+    #     img = polygon2image(args, points, imgdef['rect-area'], img)
+    for name, r in imgdef.items():
+        if name == 'polygon':
+            points = polygonpoints(args, r, rectangles)
+            img = polygon2image(args, points, r, img)
+        if name == 'rect-area':
+            points = rectpoints(args, r, rectangles)
+            img = polygon2image(args, points, r, img)
 
     imgpath = args.areasdir / imgdef['fileName'].replace('.png', '_{0}.png'.format(imgdef['ext']))
     imgpath.parent.mkdir(parents=True, exist_ok=True)
