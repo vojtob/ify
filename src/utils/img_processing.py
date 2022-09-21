@@ -127,12 +127,15 @@ def geticonxy(args, filename, iconfilepath, iconname, dicon, rectangle, xAlign, 
         dx = dicon
         dy = dicon
     
+    margin = marginSize
+    if args.poster:
+        margin = int(marginSize * args.poster)
 
     # calculate x position of icon
     if(xAlign == 'left'):
-        x = rectangle[0][0] + marginSize
+        x = rectangle[0][0] + margin
     elif(xAlign == 'right'):
-        x = rectangle[1][0] - dx - marginSize
+        x = rectangle[1][0] - dx - margin
         # x = rectangle[1][0] - dicon - marginSize
     elif (xAlign == 'center'):
         x = (rectangle[1][0]+rectangle[0][0]-dx) // 2
@@ -149,9 +152,9 @@ def geticonxy(args, filename, iconfilepath, iconname, dicon, rectangle, xAlign, 
     
     # calculate y position of icon
     if(yAlign == 'top'):
-        y = rectangle[0][1] + marginSize
+        y = rectangle[0][1] + margin
     elif(yAlign == 'bottom'):
-        y = rectangle[1][1] - dy - marginSize
+        y = rectangle[1][1] - dy - margin
         # y = rectangle[1][1] - dicon - marginSize
     elif (yAlign == 'center'):
         y = (rectangle[1][1]+rectangle[0][1]-dy) // 2
