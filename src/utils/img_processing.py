@@ -271,9 +271,11 @@ def icons2image(args, imgdef, imgPath, rectangles, img):
                 iconsize, rectangles[recID-1], icondef['x'], icondef['y'])
         else:
             if args.debug:
-                print('add icon by position', iconxy)
+                print('add icon into whole image')
             iconxy = geticonxy(args, imgdef['fileName'], iconfilepath, icondef['iconName'], 
                 iconsize, [[0,0],[img.shape[1], img.shape[0]]], icondef['x'], icondef['y'], iconfilepath)
+            if args.debug:
+                print('add icon by position', iconxy)
 
             # iconxy = (icondef['asbx'], icondef['absy'])
 

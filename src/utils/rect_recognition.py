@@ -192,6 +192,8 @@ def findRectangles(lineSegmentsHorizontal, lineSegmentsVertical, cornerGap):
 
 def __alignrectpurge(sides):
     """try to align sides, stotozni dve hrany ak sa lisia o menej ako aligngap"""
+    if len(sides) == 0:
+        return sides
     sides = sorted(sides)
     # print('sorted sides ', sides)
     isaligned = False
