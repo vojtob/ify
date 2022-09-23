@@ -273,7 +273,7 @@ def icons2image(args, imgdef, imgPath, rectangles, img):
             if args.debug:
                 print('add icon into whole image')
             iconxy = geticonxy(args, imgdef['fileName'], iconfilepath, icondef['iconName'], 
-                iconsize, [[0,0],[img.shape[1], img.shape[0]]], icondef['x'], icondef['y'], iconfilepath)
+                iconsize, [[0,0],[img.shape[1], img.shape[0]]], icondef['x'], icondef['y'])
             if args.debug:
                 print('add icon by position', iconxy)
 
@@ -305,7 +305,11 @@ def lines2image(args, lines, img, rectangles):
         for p in linepoints[1:]:
             r = rectangles[p[0]-1]
             ratio = p[2]
-            if p[1] in ['L', 'R']:
+            if p[1] == 'X':
+                # menia sa obe suradnice
+                lastx = int( (1-p[2])*r[0][0] + p[2]*r[1][0] )
+                lasty = int( (1-p[3])*r[0][1] + p[3]*r[1][1] )
+            elif p[1] in ['L', 'R']:
                 # y sa nemeni iba x
                 lastx = int( (1-ratio)*r[0][0] + ratio*r[1][0] )
             else:
@@ -371,9 +375,9 @@ def polygonpoints(args, polygon, rectangles):
         if points:
             # prev = points[-1]
             for prev in points:
-                if abs(prev[0]-x) < (2*border):
+                if abs(prev[0]-x) < (3*border):
                     x = prev[0]
-                if abs(prev[1]-y) < (2*border):
+                if abs(prev[1]-y) < (3*border):
                     y = prev[1]
         points.append([x,y])
     points.append(points[0])
@@ -442,6 +446,7 @@ def areas2image(args, imgdef, img, rectangles):
 
     if 'lines' in imgdef:
         img = lines2image(args, imgdef['lines'], img, rectangles)
+    img[:, :, 3] = np.full((img.shape[0], img.shape[1]), 255, np.uint8)
     # if 'polygon' in imgdef:
     #     points = polygonpoints(args, imgdef['polygon'], rectangles)
     #     img = polygon2image(args, points, imgdef['polygon'], img)
@@ -456,7 +461,7 @@ def areas2image(args, imgdef, img, rectangles):
             points = rectpoints(args, r, rectangles)
             img = polygon2image(args, points, r, img)
 
-    imgpath = args.areasdir / imgdef['fileName'].replace('.png', '_{0}.png'.format(imgdef['ext']))
+    imgpath = args.areasdir / imgdef['fileName'].replace('.png', '__{0}.png'.format(imgdef['ext']))
     imgpath.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(imgpath), img)
 
