@@ -103,7 +103,7 @@ if __name__ == '__main__':
                     print('delete', p)
         log(args, 'done cleaning')
 
-    if (args.command=='plantUML'):
+    if (args.command=='plantUML') or (args.command=='all'):
         log(args, 'start plantUML conversion into SVG')
         # convert from mmd to png
         convert.convert_plantuml(args)
@@ -124,13 +124,13 @@ if __name__ == '__main__':
         convert.convert_svg(args)
         log(args, 'done svg conversion')
 
-    if (args.command=='umlet'):
+    if (args.command=='umlet') or (args.command=='all'):
         log(args, 'start umlet')
         # convert from uxf to png
         convert.convert_uml(args)
         log(args, 'done umlet')
     
-    if (args.command=='mermaid'):
+    if (args.command=='mermaid') or (args.command=='all'):
         log(args, 'start mermaid')
         # convert from mmd to png
         convert.convert_mmd(args)
