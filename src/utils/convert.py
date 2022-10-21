@@ -9,6 +9,12 @@ movefiles = []
 def __img_walk(args, source_path, destination_path, orig_extension, new_extension, onfile):
     if args.verbose:
         print('convert {0}({1}) -> {2}({3})'.format(str(source_path), orig_extension, str(destination_path), new_extension))
+    if(args.file):
+        processedFile = False
+        pf = Path(source_path, args.file)
+        if args.debug:
+            print("match file path", pf)
+
     # walk over files in from directory
     for (dirpath, _, filenames) in os.walk(source_path):
         # create destination directory
@@ -18,6 +24,12 @@ def __img_walk(args, source_path, destination_path, orig_extension, new_extensio
         for f in [f for f in filenames if f.endswith(orig_extension)]:          
             # ffrom is original full name with path and orig extension
             ffrom = os.path.join(dirpath, f)
+            if(args.file):
+                if Path(ffrom).with_suffix('') != pf:
+                    # we want to process a specific file, but not this
+                    # print('skip file ', imgdef['fileName'], args.file)
+                    # continue
+                    continue
             # fto is destination full name with path and new extension
             fto = ffrom.replace(str(source_path), str(destination_path)).replace(orig_extension, new_extension)
             onfile(args, ffrom, fto, orig_extension, new_extension)
