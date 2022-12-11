@@ -190,7 +190,27 @@ def findRectangles(lineSegmentsHorizontal, lineSegmentsVertical, cornerGap):
 
     return rectangles
 
-def __alignrectpurge(sides):
+def __purge_rectangles(args, rectangles):
+    purged = []
+    for r in rectangles:
+        isduplicate = False
+        for rp in purged:
+            if (abs(r[0][0] - rp[0][0]) < aligngap) and (abs(r[0][1] - rp[0][1]) < aligngap) and (abs(r[1][0] - rp[1][0]) < aligngap) and (abs(r[1][1] - rp[1][1]) < aligngap):
+                isduplicate = True
+                break
+        if not isduplicate:
+            purged.append(r)
+    if args.debug:
+        print("original rectangles")
+        for r in rectangles:
+            print(r)
+        print("purged rectangles")
+        for r in purged:
+            print(r)
+        print(len(rectangles)-len(purged), "rectangles purged")
+    return purged
+
+def __purge_sides(sides):
     """try to align sides, stotozni dve hrany ak sa lisia o menej ako aligngap"""
     if len(sides) == 0:
         return sides
@@ -211,6 +231,48 @@ def __alignrectpurge(sides):
         sides = aligned
         # print('purged sides ', sides)
     return sides
+
+def __alignrects(args, rectangles):
+    """try to align rects, cielom je ich zarovnat dolava a hore, nie menit ich rozmery"""
+    leftsides = set()
+    topsides = set()
+    for r in rectangles:
+        leftsides.add(r[0][0])
+        topsides.add(r[0][1])
+
+    leftsides = __purge_sides(leftsides)
+    if args.debug:
+        print("leftsides", leftsides)
+
+    topsides = __purge_sides(topsides)
+    if args.debug:
+        print("topsides", topsides)
+
+    alignedrects = []
+    for r in rectangles:
+        arx = r[0][0]
+        ary = r[0][1]
+        if r[0][0] not in leftsides:
+            # left side should be aligned
+            for x in leftsides:
+                if abs(x - r[0][0]) < aligngap:
+                    arx = x
+                    break
+        if r[0][1] not in topsides:
+            # left side should be aligned
+            for y in topsides:
+                if abs(y - r[0][1]) < aligngap:
+                    ary = y
+                    break
+        alignedrects.append(((arx, ary), r[1]))
+    
+    # sort aligned rects 
+    alignedrects.sort(key = lambda x: x[0][1]*100000+x[0][0])
+    if args.debug:
+        for i,r in enumerate(alignedrects):
+            print(i+1, "aligned", r, "orginal", rectangles[i])
+    
+    return alignedrects
 
 def getRectangles(args, imgBW, imgdef):
     really_small_gap   = int(imgdef['gap'])     if 'gap'     in imgdef else 3
@@ -241,40 +303,9 @@ def getRectangles(args, imgBW, imgdef):
     #            print(y)
 
     rectangles = findRectangles(lineSegmentsHorizontal, lineSegmentsVertical, corner_gap)
-    # align rectangles
-    leftsides = set()
-    topsides = set()
-    for r in rectangles:
-        leftsides.add(r[0][0])
-        topsides.add(r[0][1])
-    leftsides = __alignrectpurge(leftsides)
-    # print(leftsides)
-    topsides = __alignrectpurge(topsides)
-    # print(topsides)
+    rectangles = __purge_rectangles(args, rectangles)
+    rectangles = __alignrects(args, rectangles)
+    # for r in rectangles:
+    #     print(r)
 
-    alignedrects = []
-    for r in rectangles:
-        arx = r[0][0]
-        ary = r[0][1]
-        if r[0][0] not in leftsides:
-            # left side should be aligned
-            for x in leftsides:
-                if abs(x - r[0][0]) < aligngap:
-                    arx = x
-                    break
-        if r[0][1] not in topsides:
-            # left side should be aligned
-            for y in topsides:
-                if abs(y - r[0][1]) < aligngap:
-                    ary = y
-                    break
-        alignedrects.append(((arx, ary), r[1]))
-    
-    # sort aligned rects 
-    alignedrects.sort(key = lambda x: x[0][1]*100000+x[0][0])
-    if args.debug:
-        for i,r in enumerate(alignedrects):
-            print(i+1, r)
-            print(i+1, rectangles[i])
-    
-    return alignedrects
+    return rectangles

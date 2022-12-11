@@ -114,6 +114,12 @@ if __name__ == '__main__':
         convert.copy_svg(args)
         log(args, 'done svg copy')
 
+    if (args.command=='umlet') or (args.command=='all'):
+        log(args, 'start umlet')
+        # convert from uxf to png
+        convert.convert_uml(args)
+        log(args, 'done umlet')
+    
     if (args.command=='cppng') or (args.command=='all'):
         log(args, 'start copy png')
         convert.copy_png(args)
@@ -124,12 +130,6 @@ if __name__ == '__main__':
         convert.convert_svg(args)
         log(args, 'done svg conversion')
 
-    if (args.command=='umlet') or (args.command=='all'):
-        log(args, 'start umlet')
-        # convert from uxf to png
-        convert.convert_uml(args)
-        log(args, 'done umlet')
-    
     if (args.command=='mermaid') or (args.command=='all'):
         log(args, 'start mermaid')
         # convert from mmd to png

@@ -35,20 +35,22 @@ def __img_walk(args, source_path, destination_path, orig_extension, new_extensio
             onfile(args, ffrom, fto, orig_extension, new_extension)
 
 def onfile_convert_svg(args, fromfile, tofile, orig_extension, new_extension):
-    # svg_command = str(Path(os.environ['IM_HOME'], 'magick')) + ' -density 144 {srcfile} {destfile}'
     density = 144
     if args.poster:
         density = int(density * args.poster)
-    # svg_command = 'magick -density 144 {srcfile} {destfile}'
     svg_command = 'magick -density {density} {srcfile} {destfile}'
     cmd = svg_command.format(srcfile=fromfile, destfile=tofile, density=density)
+
+    # svg_command = 'inkscape --export-type="png" {srcfile}'
+    # cmd = svg_command.format(srcfile=fromfile)
+
     if args.debug:
         print(cmd)
     subprocess.run(cmd, shell=False)
 
 def onfile_convert_uml(args, fromfile, tofile, orig_extension, new_extension):
     global movefiles
-    uxf_command = str(Path('C:/', 'prg', 'Umlet', 'Umlet')) + ' -action=convert -format=png -filename="{srcfile}"'
+    uxf_command = str(Path('C:/', 'prg', 'Umlet', 'Umlet')) + ' -action=convert -format=svg -filename="{srcfile}"'
     cmd = uxf_command.format(srcfile=fromfile)
     if args.debug:
         print(cmd)
@@ -105,8 +107,10 @@ def convert_uml(args):
     global movefiles
     movefiles = []
     __img_walk(args, 
-        args.sourcedir, args.exporteddir, 
-        '.uxf', '.png', onfile_convert_uml)
+        # args.sourcedir, args.exporteddir, 
+        # '.uxf', '.png', onfile_convert_uml)
+        args.sourcedir, args.svgdir, 
+        '.uxf', '.svg', onfile_convert_uml)
     # move files
     if len(movefiles) < 1:
         if args.verbose:

@@ -224,6 +224,7 @@ def add_decorations(args, what):
         # if (args.file is not None) and (not PureWindowsPath(imgdef['fileName']).with_suffix('').match(args.file)):
         if args.file:
             # print('only specific file', args.file)
+            # print(Path(imgdef['fileName']).with_suffix(''))
             if Path(imgdef['fileName']).with_suffix('') != pf:
                 # we want to process a specific file, but not this
                 # print('skip file ', imgdef['fileName'], args.file)
@@ -367,11 +368,21 @@ def polygonpoints(args, polygon, rectangles):
     # identify bounding polygons for areas
     points = []
     for p in polygon['points']:
-        r = rectangles[p[0]-1]
-        istop = p[1][0] == 'T'
-        isleft = p[1][1] == 'L'
-        x = (r[0][0]-border) if isleft else (r[1][0]+border)
-        y = (r[0][1]-border) if istop  else (r[1][1]+border)
+        if len(p) == 2:
+            # by corner of rectangle
+            r = rectangles[p[0]-1]
+            istop = p[1][0] == 'T'
+            isleft = p[1][1] == 'L'
+            x = (r[0][0]-border) if isleft else (r[1][0]+border)
+            y = (r[0][1]-border) if istop  else (r[1][1]+border)
+        else:
+            # by coordinates defined by rectangles
+            r = rectangles[p[0]-1]
+            isleft = p[1] == 'L'
+            x = (r[0][0]-border) if isleft else (r[1][0]+border)
+            r = rectangles[p[2]-1]
+            istop = p[3] == 'T'
+            y = (r[0][1]-border) if istop  else (r[1][1]+border)
         if points:
             # prev = points[-1]
             for prev in points:
@@ -380,6 +391,7 @@ def polygonpoints(args, polygon, rectangles):
                 if abs(prev[1]-y) < (3*border):
                     y = prev[1]
         points.append([x,y])
+
     points.append(points[0])
     return points
 
