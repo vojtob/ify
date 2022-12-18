@@ -179,7 +179,7 @@ def __processdef(args, what, imgdef):
         print('Start adding ' + what + ' to image {0}'.format(imgdef['fileName']))
 
     # read image
-    imgpath = args.exporteddir / imgdef['fileName']
+    imgpath = args.pngdir / imgdef['fileName']
     if not (imgpath).exists():
         args.problems.append('Add ' + what + ' to image: file {0} does not exists !!!'.format(imgdef['fileName']))
         return

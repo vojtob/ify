@@ -15,15 +15,14 @@ def __add_project(args):
         args.projectdir = Path.cwd().parent
     else:
         args.projectdir = Path(args.projectdir)
-    args.sourcedir = args.projectdir / 'src_doc' / 'img'
     args.destdir = args.projectdir / 'temp'
-    args.alldir = args.destdir / 'img_all'
-    args.svgdir = args.destdir / 'img_exported_svg'
-    args.exporteddir = args.destdir / 'img_exported'
+    args.pngdir = args.destdir / 'img_png'
     args.iconsdir = args.destdir / 'img_icons'
     args.areasdir = args.destdir / 'img_areas'
     args.recdir = args.destdir / 'img_rec'
     args.bwdir = args.destdir / 'img_BW'
+    args.alldir = args.destdir / 'img_all'
+
     args.iconssourcedir = Path('C:/Projects_src/resources/dxc-icons')
     args.projectname = args.projectdir.stem
     args.ifypath = Path(__file__).parent.parent
@@ -59,24 +58,6 @@ if __name__ == '__main__':
     parser_areas.set_defaults(command='areas')
     # # parser_areas.add_argument('-f', '--file', help='process only this one file')
 
-    parser_svg = subparsers.add_parser('svg', help='conver from svg to png')
-    parser_svg.set_defaults(command='svg')
-
-    parser_svg = subparsers.add_parser('cpsvg', help='copy svg in source to svg in dest')
-    parser_svg.set_defaults(command='cpsvg')
-
-    parser_svg = subparsers.add_parser('cppng', help='copy png in source to png in dest')
-    parser_svg.set_defaults(command='cppng')
-
-    parser_umlet = subparsers.add_parser('umlet', help='umlet -> png')
-    parser_umlet.set_defaults(command='umlet')
-
-    parser_mermaid = subparsers.add_parser('mermaid', help='mermaid images -> png')
-    parser_mermaid.set_defaults(command='mermaid')
-
-    parser_plantuml = subparsers.add_parser('plantuml', help='plantUML images -> svg')
-    parser_plantuml.set_defaults(command='plantUML')
-
     parser_mermaid = subparsers.add_parser('test', help='pre testovanie novej funkcionality')
     parser_mermaid.set_defaults(command='test')
 
@@ -95,46 +76,13 @@ if __name__ == '__main__':
 
     if args.command=='clean':
         log(args, 'start cleaning')
-        for dirname in [args.alldir, args.exporteddir, args.iconsdir, args.areasdir, args.recdir, args.bwdir]: # 'release/img', 
+        for dirname in [args.alldir, args.iconsdir, args.areasdir, args.recdir, args.bwdir, args.pngdir]:
             p = args.projectdir / dirname
             if p.exists():
                 shutil.rmtree(p)
                 if args.verbose:
                     print('delete', p)
         log(args, 'done cleaning')
-
-    if (args.command=='plantUML') or (args.command=='all'):
-        log(args, 'start plantUML conversion into SVG')
-        # convert from mmd to png
-        convert.convert_plantuml(args)
-        log(args, 'done plantUML conversion')
-
-    if (args.command=='cpsvg') or (args.command=='all'):
-        log(args, 'start copy svg')
-        convert.copy_svg(args)
-        log(args, 'done svg copy')
-
-    if (args.command=='umlet') or (args.command=='all'):
-        log(args, 'start umlet')
-        # convert from uxf to png
-        convert.convert_uml(args)
-        log(args, 'done umlet')
-    
-    if (args.command=='cppng') or (args.command=='all'):
-        log(args, 'start copy png')
-        convert.copy_png(args)
-        log(args, 'done png copy')
-
-    if (args.command=='svg') or (args.command=='all'):
-        log(args, 'start svg conversion')
-        convert.convert_svg(args)
-        log(args, 'done svg conversion')
-
-    if (args.command=='mermaid') or (args.command=='all'):
-        log(args, 'start mermaid')
-        # convert from mmd to png
-        convert.convert_mmd(args)
-        log(args, 'done mermaid')
 
     if (args.command=='icons') or (args.command=='all'):
         log(args, 'start icons')
@@ -154,13 +102,11 @@ if __name__ == '__main__':
 
     if args.command !='clean':
         # if (args.command=='publish') or (args.command=='all'):
+        # publish images to img_all dir
         log(args, 'start merging images')
-        # publish images to release dir
-        # imgspath = args.projectdir / 'release' / 'img'
         args.alldir.mkdir(parents=True, exist_ok=True)
-        # copy png images from src  
-        # copy exported images
-        convert.mycopy(args.exporteddir, args.alldir, args)
+        # copy png images
+        convert.mycopy(args.pngdir, args.alldir, args)
         # overwrite them with images with icons
         convert.mycopy(args.iconsdir, args.alldir, args)
         # copy areas images
