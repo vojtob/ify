@@ -205,14 +205,24 @@ def add_decorations(args, what):
             print('add ', what, 'for a file', args.file)
         else:
             print('add ', what)
-    # read definitions 
-    p =   args.projectdir / 'src_doc' / 'img' / (what+'.json')
-    if not p.exists():
-        if args.verbose:
-            print('no ' + what + ' definition at ' + str(p) +', skipp it')
-        return
-    with open(p) as imagesFile:
-        imagedefs = json.load(imagesFile)
+    # read definitions
+    # p =   args.projectdir / 'src_doc' / 'img' / (what+'.json')
+    # if not p.exists():
+    #     if args.verbose:
+    #         print('no ' + what + ' definition at ' + str(p) +', skipp it')
+    #     return
+    # with open(p) as imagesFile:
+    #     imagedefs = json.load(imagesFile)
+    allfiles = os.listdir(args.projectdir / 'src_doc' / 'img')
+    iconfiles = [f for f in allfiles if (f.startswith(what) and f.endswith('.json'))]
+    if len(iconfiles) == 0:
+        print('no ' + what + ' definition, skipp it')
+    imagedefs = []
+    for f in iconfiles:
+        with open(args.projectdir / 'src_doc' / 'img' / f) as imagesFile:
+            # print('read from ', imagesFile)
+            imagedefs.extend(json.load(imagesFile))
+
     if(args.file):
         processedFile = False
         pf = Path(args.file)
