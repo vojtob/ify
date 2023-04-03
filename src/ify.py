@@ -105,9 +105,9 @@ if __name__ == '__main__':
         # publish images to img_all dir
         log(args, 'start merging images')
         args.alldir.mkdir(parents=True, exist_ok=True)
-        # copy png images
-        convert.mycopy(args.pngdir, args.alldir, args)
-        # overwrite them with images with icons
+        # copy png images - this is in image_convert
+        # convert.mycopy(args.pngdir, args.alldir, args)
+        # overwrite images with images with icons
         convert.mycopy(args.iconsdir, args.alldir, args)
         # copy areas images
         convert.mycopy(args.areasdir, args.alldir, args)
