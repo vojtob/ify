@@ -491,9 +491,7 @@ def areas2image(args, imgdef, img, rectangles):
         # lebo nevie lepit dvoj a trojrozmerny kvader dokopy
         # lepi sa pozdlz poslednej osi
         x = np.full((img.shape[0], img.shape[1], 1), 255, np.uint8)
-        print(x.shape)
         img = np.concatenate((img, x),2)
-        print(img.shape)
 
     if 'lines' in imgdef:
         img = lines2image(args, imgdef['lines'], img, rectangles)
