@@ -58,6 +58,9 @@ if __name__ == '__main__':
     parser_areas.set_defaults(command='areas')
     # # parser_areas.add_argument('-f', '--file', help='process only this one file')
 
+    parser_mermaid = subparsers.add_parser('rec', help='aby som videl identifikaciu obdlznikov')
+    parser_mermaid.set_defaults(command='rec')
+
     parser_mermaid = subparsers.add_parser('test', help='pre testovanie novej funkcionality')
     parser_mermaid.set_defaults(command='test')
 
@@ -93,6 +96,11 @@ if __name__ == '__main__':
         log(args, 'start areas')
         img_processing.add_decorations(args, 'areas')
         log(args, 'done areas')
+
+    if (args.command=='rec'):
+        log(args, 'start rectangles identification')
+        img_processing.show_rectangles(args)
+        log(args, 'done test')
 
     if (args.command=='test'):
         log(args, 'start test')

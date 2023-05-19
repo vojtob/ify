@@ -56,6 +56,7 @@ def imgrectangles(img, imgdef, args):
     if args.debug:
         bwpath = args.bwdir / imgdef['fileName']
         bwpath.parent.mkdir(parents=True, exist_ok=True)           
+        print('BW file path: ' + str(bwpath))
         cv2.imwrite(str(bwpath), imgBW)
     
     # identify rectangles
@@ -246,6 +247,25 @@ def add_decorations(args, what):
     if not processedFile:
         print('file {0} not found for {1}'.format(args.file, what))
         args.problems.append('file {0} not found for {1}'.format(args.file, what))
+
+def show_rectangles(args):
+    args.debug = True
+    if args.verbose or args.debug:
+        print('Start idetifying rectangles in image {0}'.format(args.file))
+
+    # read image
+    imgpath = args.pngdir / (args.file + '.png')
+    if args.debug:
+        print('whole image path:', imgpath)
+    if not (imgpath).exists():
+        args.problems.append('Identify rectangles failed, image file {0} does not exists !!!'.format(args.file))
+        print('Identify rectangles failed, image file {0} does not exists !!!'.format(args.file))
+        return
+    
+    img = cv2.imread(str(imgpath), cv2.IMREAD_UNCHANGED)
+    imgdef = { 'fileName' : args.file + '.png'}
+    rectangles = imgrectangles(img, imgdef, args)
+
 
 def icons2image(args, imgdef, imgPath, rectangles, img):
     # add icons to image
@@ -458,13 +478,22 @@ def areas2image(args, imgdef, img, rectangles):
     if args.verbose:
         print('process areas with extension', imgdef['ext'])
 
-    # if args.debug:
-    #     print(img.shape)
-    #     print(img[:, :, 3])
+    if args.debug:
+        print(img.shape)
+        # print(img[:, :, 3])
     if img.shape[2] < 4:
         # no transparency in image
-        x = np.full((img.shape[0], img.shape[1]), 255, np.uint8)
+        # mam obrazok X x Y, kedze je farebny, tak ma RGB zlozku
+        # preto je X x Y x 3 treba si to predstavit ako kvader
+        # potrebujeme pridat este jednu vrstvu, ktora hovori o transparentnosti
+        # vytvorim pole X x Y x 1 , predstavit si ho zase ako kvader
+        # ktory potrebujem prilepit na povodny. Nestaci lepit dvojrozmerny X x Y
+        # lebo nevie lepit dvoj a trojrozmerny kvader dokopy
+        # lepi sa pozdlz poslednej osi
+        x = np.full((img.shape[0], img.shape[1], 1), 255, np.uint8)
+        print(x.shape)
         img = np.concatenate((img, x),2)
+        print(img.shape)
 
     if 'lines' in imgdef:
         img = lines2image(args, imgdef['lines'], img, rectangles)
