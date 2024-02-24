@@ -106,7 +106,7 @@ def overlayImageOverImage(bigImg, smallImage, smallImageOrigin, args):
 
     return bigImg
 
-def geticonxy(args, filename, iconfilepath, iconname, dicon, rectangle, xAlign, yAlign, marginSize=5):
+def geticonxy(args, filename, iconfilepath, iconname, dicon, rectanglex, rectangley, xAlign, yAlign, marginSize=5):
     if str(iconfilepath).endswith('.svg'):
         if args.debug:
             print("read icon to aquire size:", iconfilepath)
@@ -134,17 +134,17 @@ def geticonxy(args, filename, iconfilepath, iconname, dicon, rectangle, xAlign, 
 
     # calculate x position of icon
     if(xAlign == 'left'):
-        x = rectangle[0][0] + margin
+        x = rectanglex[0][0] + margin
     elif(xAlign == 'right'):
-        x = rectangle[1][0] - dx - margin
+        x = rectanglex[1][0] - dx - margin
         # x = rectangle[1][0] - dicon - marginSize
     elif (xAlign == 'center'):
-        x = (rectangle[1][0]+rectangle[0][0]-dx) // 2
+        x = (rectanglex[1][0]+rectanglex[0][0]-dx) // 2
         # x = (rectangle[1][0]+rectangle[0][0]-dicon) // 2
     else:
         # relative
         try:
-            x = int( (1-xAlign)*rectangle[0][0] + xAlign*rectangle[1][0] - dx/2 )
+            x = int( (1-xAlign)*rectanglex[0][0] + xAlign*rectanglex[1][0] - dx/2 )
             # x = int( (1-xAlign)*rectangle[0][0] + xAlign*rectangle[1][0] - dicon/2 )
         except:
             args.problems.append('icon {0} in image {1} has bad x align !!!!!!!'.format(iconname, filename))
@@ -153,18 +153,18 @@ def geticonxy(args, filename, iconfilepath, iconname, dicon, rectangle, xAlign, 
     
     # calculate y position of icon
     if(yAlign == 'top'):
-        y = rectangle[0][1] + margin
+        y = rectangley[0][1] + margin
     elif(yAlign == 'bottom'):
-        y = rectangle[1][1] - dy - margin
+        y = rectangley[1][1] - dy - margin
         # y = rectangle[1][1] - dicon - marginSize
     elif (yAlign == 'center'):
-        y = (rectangle[1][1]+rectangle[0][1]-dy) // 2
+        y = (rectangley[1][1]+rectangley[0][1]-dy) // 2
         # y = (rectangle[1][1]+rectangle[0][1]-dicon) // 2
     else:
         # relative
         try:
             pass
-            y = int( (1-yAlign)*rectangle[0][1] + yAlign*rectangle[1][1] - dy/2 )
+            y = int( (1-yAlign)*rectangley[0][1] + yAlign*rectangley[1][1] - dy/2 )
             # y = int( (1-yAlign)*rectangle[0][1] + yAlign*rectangle[1][1] - dicon/2 )
         except:
             args.problems.append('icon {0} in image {1} has bad y align !!!!!!!'.format(iconname, filename))
@@ -299,7 +299,20 @@ def icons2image(args, imgdef, imgPath, rectangles, img):
                 args.problems.append('Add icon2image: icon {0} for image {1} refers to non existing rectangle {2}'.format(icondef['iconName'], imgdef['fileName'], recID))
                 return
             iconxy = geticonxy(args, imgdef['fileName'], iconfilepath, icondef['iconName'], 
-                iconsize, rectangles[recID-1], icondef['x'], icondef['y'])
+                iconsize, rectangles[recID-1], rectangles[recID-1], icondef['x'], icondef['y'])
+        elif 'recs' in icondef:
+            if args.debug:
+                print('add icon by two rectangles')
+            recID1 = icondef['recs'][0]
+            recID2 = icondef['recs'][1]
+            if( recID1 > len(rectangles)):
+                args.problems.append('Add icon2image: icon {0} for image {1} refers to non existing x rectangle {2}'.format(icondef['iconName'], imgdef['fileName'], recID1))
+                return
+            if( recID2 > len(rectangles)):
+                args.problems.append('Add icon2image: icon {0} for image {1} refers to non existing y rectangle {2}'.format(icondef['iconName'], imgdef['fileName'], recID2))
+                return
+            iconxy = geticonxy(args, imgdef['fileName'], iconfilepath, icondef['iconName'], 
+                iconsize, rectangles[recID1-1], rectangles[recID2-1], icondef['x'], icondef['y'])
         else:
             if args.debug:
                 print('add icon into whole image')
