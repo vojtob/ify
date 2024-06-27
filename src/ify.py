@@ -13,15 +13,23 @@ def log(args, message):
 def __add_project(args):
     if not 'projectdir' in args:
         args.projectdir = Path.cwd().parent
+        if args.projectdir.stem == 'utils':
+            args.projectdir = args.projectdir.parent
+        if args.projectdir.stem == 'img':
+            args.projectdir = args.projectdir.parent
+        if args.projectdir.stem == 'src_doc':
+            args.projectdir = args.projectdir.parent
     else:
         args.projectdir = Path(args.projectdir)
+
     args.destdir = args.projectdir / 'temp'
-    args.pngdir = args.destdir / 'img_png'
+
+    args.alldir   = args.destdir / 'img_all'
+    args.pngdir   = args.destdir / 'img_png'
     args.iconsdir = args.destdir / 'img_icons'
     args.areasdir = args.destdir / 'img_areas'
-    args.recdir = args.destdir / 'img_rec'
-    args.bwdir = args.destdir / 'img_BW'
-    args.alldir = args.destdir / 'img_all'
+    args.recdir   = args.destdir / 'img_rec'
+    args.bwdir    = args.destdir / 'img_BW'
 
     args.iconssourcedir = Path('C:/Projects_src/resources/dxc-icons')
     args.projectname = args.projectdir.stem
