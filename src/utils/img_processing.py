@@ -5,7 +5,7 @@ import json
 
 import numpy as np
 import cv2
-from numpy.lib.shape_base import apply_along_axis
+#from numpy.lib.shape_base import apply_along_axis
 # from cairosvg import svg2svg
 import xml.etree.ElementTree as ET
 
