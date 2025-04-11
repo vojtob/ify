@@ -124,10 +124,27 @@ def geticonxy(args, filename, iconfilepath, iconname, dicon, rectanglex, rectang
         dy = int(q*dy)
         if args.debug:
             print("icon size:", dx, dy)
+    elif str(iconfilepath).endswith('.png'):
+        # read icon to aquire size
+        if args.debug:
+            print("read icon to aquire size:", iconfilepath)
+        img = cv2.imread(str(iconfilepath), cv2.IMREAD_UNCHANGED)
+        if args.debug:
+            print(img.shape)
+        dx = img.shape[1]
+        dy = img.shape[0]
+        q = dicon / max(dx,dy)
+        if args.debug:
+            print(f"icon size: {dx}, {dy}, {q}")
+        dx = int(q*dx)
+        dy = int(q*dy)
+        if args.debug:
+            print(f"icon size: {dx}, {dy}")
     else:
         dx = dicon
         dy = dicon
-    
+
+
     margin = marginSize
     if args.poster:
         margin = int(marginSize * args.poster)
