@@ -1,6 +1,7 @@
 import argparse
 from pathlib import PureWindowsPath, Path
 import shutil
+import os
 
 from utils import convert, img_processing
 
@@ -31,7 +32,8 @@ def __add_project(args):
     args.recdir   = args.destdir / 'img_rec'
     args.bwdir    = args.destdir / 'img_BW'
 
-    args.iconssourcedir = Path('C:/Projects_src/resources/dxc-icons')
+    docool_home = Path(os.getenv('DOCOOL_HOME', 'C:/Projects_src'))
+    args.iconssourcedir = docool_home.parent
     args.projectname = args.projectdir.stem
     args.ifypath = Path(__file__).parent.parent
     args.problems = []
@@ -39,7 +41,9 @@ def __add_project(args):
     if args.verbose:
         print('{args.projectname}: {args.projectdir}'.format(args=args))
     if args.debug:
-        print('docool path: {0}'.format(args.ifypath))
+        print(f'DOCOOL_HOME: {docool_home}')
+        print('ify path: {0}'.format(args.ifypath))
+        print(f'iconssourcedir: {args.iconssourcedir}')
 
     return args
 
