@@ -10,15 +10,21 @@ import cv2
 import xml.etree.ElementTree as ET
 
 import utils.rect_recognition as rr
+import utils.rec as urec
+from utils.rec import LOG_LEVEL_ALL, LOG_LEVEL_DEBUG, LOG_LEVEL_INFO, LOG_LEVEL_WARNING, LOG_LEVEL_ERROR
+from utils.rec import log
+
 
 BW_TRESHOLD = 135
 
 def convertImage(img, imgdef, args):
     "convert input image into BW"
-    if len(img.shape) > 2:
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    else:
+    if len(img.shape) == 2: # grayscale image
         gray = img
+    if img.shape[2] == 4: # color image with alpha channel
+        gray = cv2.cvtColor(img[:, :, :3], cv2.COLOR_BGR2GRAY)
+    else: # color image without alpha channel
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     treshold = int(imgdef['treshold']) if 'treshold' in imgdef else BW_TRESHOLD
     if args.debug:
@@ -32,13 +38,22 @@ def convertImage(img, imgdef, args):
     return thresh
 
 def rectangles2image(img, rectangles):
-    imgRec = np.copy(img)
+    # rec_color = (255,0,0)
+    rec_color = (145,44,111)
     recCounter = 1
     font = cv2.FONT_HERSHEY_SIMPLEX
+
+    # imgRec = np.copy(img)
+    imgRec = img[:, :, :3].copy()
     for r in rectangles:
-        cv2.rectangle(imgRec, r[0], r[1], (0,0,255), thickness=2)
-        cv2.putText(imgRec,str(recCounter),(r[0][0],r[0][1]+30), font, 1, (0,0,255),1,cv2.LINE_AA)
+        cv2.rectangle(imgRec, r[0], r[1], rec_color, thickness=2)
+        cv2.putText(imgRec,str(recCounter),(r[0][0],r[0][1]+30), font, 1, rec_color,1,cv2.LINE_AA)
         recCounter += 1
+
+    imgRec = cv2.merge((imgRec[:, :, 0],
+                imgRec[:, :, 1],
+                imgRec[:, :, 2],
+                img[:, :, 3]))  # pôvodný alfa kanál
 
     # for y, segments in lineSegmentsHorizontal.items():
     #     for s in segments:
@@ -50,22 +65,30 @@ def rectangles2image(img, rectangles):
     return imgRec
 
 def imgrectangles(img, imgdef, args):
-    # convert to BW
-    imgBW = convertImage(img, imgdef, args)
-    # save BW image
-    if args.debug:
-        bwpath = args.bwdir / imgdef['fileName']
-        bwpath.parent.mkdir(parents=True, exist_ok=True)           
-        print('BW file path: ' + str(bwpath))
-        cv2.imwrite(str(bwpath), imgBW)
+    ip = args.xxdir / imgdef['fileName']
     
-    # identify rectangles
-    rectangles = rr.getRectangles(args, imgBW, imgdef)
-    if args.verbose:
-        imgrec = rectangles2image(img, rectangles)
-        recpath = args.recdir / imgdef['fileName']
-        recpath.parent.mkdir(parents=True, exist_ok=True)
-        cv2.imwrite(str(recpath), imgrec)
+    # LOG_LEVEL = args.loglevel
+    loglevel = urec.LOG_LEVEL_DEBUG if args.debug else urec.LOG_LEVEL_INFO if args.verbose else urec.LOG_LEVEL_WARNING
+
+    rectangles = urec.getRectangles(img, ip, loglevel)
+
+    # # convert to BW
+    # imgBW = convertImage(img, imgdef, args)
+    # # save BW image
+    # if args.debug:
+    #     bwpath = args.xxdir / imgdef['fileName']
+    #     bwpath.parent.mkdir(parents=True, exist_ok=True)           
+    #     print('BW file path: ' + str(bwpath))
+    #     cv2.imwrite(str(bwpath), imgBW)
+    
+    # # identify rectangles
+    # rectangles = rr.getRectangles(args, imgBW, imgdef)
+
+    # if args.verbose:
+    #     imgrec = rectangles2image(img, rectangles)
+    #     recpath = args.recdir / imgdef['fileName']
+    #     recpath.parent.mkdir(parents=True, exist_ok=True)
+    #     cv2.imwrite(str(recpath), imgrec)
 
     return rectangles
 
@@ -262,8 +285,9 @@ def add_decorations(args, what):
         #     print('process ' + what + args.file)
         __processdef(args, what, imgdef)
     if not processedFile:
-        print('file {0} not found for {1}'.format(args.file, what))
-        args.problems.append('file {0} not found for {1}'.format(args.file, what))
+        message = f'file {args.file} not found for {what}'
+        print(message)
+        args.problems.append(message)
 
 def show_rectangles(args):
     args.debug = True
@@ -421,7 +445,7 @@ def lines2image(args, lines, img, rectangles):
             img = cv2.circle(img, p0, circlesize, linecolor, -1)
     return img
 
-def polygonpoints(args, polygon, rectangles):
+def polygonpoints(args, polygon, rectangles, maxx, maxy):
     border = polygon['border']  if 'border' in polygon else 8
     if args.poster:
         border = int(border * args.poster)
@@ -450,12 +474,14 @@ def polygonpoints(args, polygon, rectangles):
                     x = prev[0]
                 if abs(prev[1]-y) < (3*border):
                     y = prev[1]
-        points.append([x,y])
+        x = max(0, min(x, maxx))
+        y = max(0, min(y, maxy))
+        points.append([x, y])
 
     points.append(points[0])
     return points
 
-def rectpoints(args, rectarea, rectangles):
+def rectpoints(args, rectarea, rectangles, maxx, maxy):
     border = rectarea['border']  if 'border' in rectarea else 8
     if args.poster:
         border = int(border * args.poster)
@@ -471,6 +497,10 @@ def rectpoints(args, rectarea, rectangles):
     y1 = min(y1, r[0][1]-border)
     x2 = max(x2, r[1][0]+border)
     y2 = max(y2, r[1][1]+border)
+    x1 = max(0, min(x1, maxx))
+    x2 = max(0, min(x2, maxx))
+    y1 = max(0, min(y1, maxy))
+    y2 = max(0, min(y2, maxy))
     points.append([x1,y1])
     points.append([x2,y1])
     points.append([x2,y2])
@@ -479,24 +509,31 @@ def rectpoints(args, rectarea, rectangles):
 
 def polygon2image(args, points, area, img):
     linewidth = area['linewidth'] if ('linewidth' in area) else 2
-    linecolor = (area['linecolor'][2], area['linecolor'][1], area['linecolor'][0]) if 'linecolor' in area else (145,44,111)
+    linecolor = (area['linecolor'][2], area['linecolor'][1], area['linecolor'][0]) if 'linecolor' in area else (255,204,102)
     opacity   = area['opacity'] if 'opacity' in area else 80
     if args.poster:
         linewidth = int(linewidth * args.poster)
-    if args.debug:
-        print('linecolor: {0}, linewidth: {1}, opacity: {2}'.format(linecolor, linewidth, opacity))
+    log(LOG_LEVEL_INFO, f'{linecolor=}, {linewidth=}, {opacity=}')
 
     points = np.array([[p[0],p[1]] for p in points], np.int32)
     points = points.reshape((-1,1,2))
+    log(LOG_LEVEL_ALL, points)
+
     # draw polygon
     img = cv2.polylines(img, [points], True, linecolor, linewidth)
-    if args.debug:
-        print(points)
 
     # add mask opacity
-    mask = np.full((img.shape[0], img.shape[1]), opacity, np.uint8)
-    mask = cv2.fillPoly(mask, [points], 255)
+    mask = np.full((img.shape[0], img.shape[1]), opacity, np.uint8) # priehladnost
+    mask = np.minimum(mask, img[:, :, 3]) # tam kde bol povodny obrazok priesvitny, tam bude aj novy
+    mask = cv2.fillPoly(mask, [points], 255) # to co chcem zvyraznit je vsade na 255, 
+    # takze teraz mam na obrazok, kde je polygon 255 - uplne nepriehladny
+    # a inde je 0 kde bol povodny obrazok transaparentny alebo opacity kde bol povodny obrazok nepriesvitny
+    mask = np.minimum(mask, img[:, :, 3]) # novy obrazok zoberie na kazdom mieste najmensiu priesvitnost, takze v polygone sa plne riadi povodnym obrazkom, inde da bud 0 alebo opacity
+    # este potrebujem doplnit masku o polygon, aby som mal vsetko co je v polygone uplne nepriesvitne
+    mask = cv2.polylines(mask, [points], True, 255, linewidth)
+    # pouzi masku na obrazok
     img[:, :, 3] = mask
+
     return img
 
 def areas2image(args, imgdef, img, rectangles):
@@ -525,22 +562,19 @@ def areas2image(args, imgdef, img, rectangles):
 
     if 'lines' in imgdef:
         img = lines2image(args, imgdef['lines'], img, rectangles)
-    img[:, :, 3] = np.full((img.shape[0], img.shape[1]), 255, np.uint8)
-    # if 'polygon' in imgdef:
-    #     points = polygonpoints(args, imgdef['polygon'], rectangles)
-    #     img = polygon2image(args, points, imgdef['polygon'], img)
-    # if 'rect-area' in imgdef:
-    #     points = rectpoints(args, imgdef['rect-area'], rectangles)
-    #     img = polygon2image(args, points, imgdef['rect-area'], img)
+    # img[:, :, 3] = np.full((img.shape[0], img.shape[1]), 255, np.uint8)
     for name, r in imgdef.items():
         if name == 'polygon':
-            points = polygonpoints(args, r, rectangles)
+            points = polygonpoints(args, r, rectangles, img.shape[1], img.shape[0])
             img = polygon2image(args, points, r, img)
         if name == 'rect-area':
-            points = rectpoints(args, r, rectangles)
+            points = rectpoints(args, r, rectangles, img.shape[1], img.shape[0])
             img = polygon2image(args, points, r, img)
 
     imgpath = args.areasdir / imgdef['fileName'].replace('.png', '__{0}.png'.format(imgdef['ext']))
+    # imgpath = args.areasdir / imgdef['fileName']
+    # log(LOG_LEVEL_INFO, f"Saving image to {imgpath}")
+    # imgpath = imgpath.with_stem(f"{imgdef['fileName']}_{imgdef['ext']}")
     imgpath.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(imgpath), img)
 

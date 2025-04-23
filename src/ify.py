@@ -31,6 +31,7 @@ def __add_project(args):
     args.areasdir = args.destdir / 'img_areas'
     args.recdir   = args.destdir / 'img_rec'
     args.bwdir    = args.destdir / 'img_BW'
+    args.xxdir    = args.destdir / 'img_XX'
 
     docool_home = Path(os.getenv('DOCOOL_HOME', 'C:/Projects_src'))
     args.iconssourcedir = docool_home.parent

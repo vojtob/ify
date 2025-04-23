@@ -274,6 +274,30 @@ def __alignrects(args, rectangles):
     
     return alignedrects
 
+def findCVRectangles(args, imgBW, imgdef):
+
+    # Nájdeme kontúry (hranice objektov)
+    # contours, _ = cv2.findContours(imgBW, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    edges = cv2.Canny(imgBW, 50, 150)
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    print("found contours", len(contours))
+    if args.debug:
+        for i, contour in enumerate(contours):
+            print(f"Contour {i}: {contour}")
+
+    elements = []
+
+    # Pre každý nájdený tvar
+    for cnt in contours:
+        x, y, w, h = cv2.boundingRect(cnt)
+        if w > 50 and h > 20:  # Vyfiltruj malé "šumy"
+            elements.append(((x,y), (x+w,x+h)))
+    
+    return elements
+
+
 def getRectangles(args, imgBW, imgdef):
     really_small_gap   = int(imgdef['gap'])     if 'gap'     in imgdef else 3
     min_segment_length = int(imgdef['segment']) if 'segment' in imgdef else 30
@@ -287,7 +311,7 @@ def getRectangles(args, imgBW, imgdef):
         print('identify rectangles with gap {0}, segment {1}, corner {2}'.format(really_small_gap, min_segment_length, corner_gap))
 
     # identify rectangles
-    lineSegmentsHorizontal, lineSegmentsVertical = findLineSegments(imgBW, really_small_gap, min_segment_length)
+    # lineSegmentsHorizontal, lineSegmentsVertical = findLineSegments(imgBW, really_small_gap, min_segment_length)
     # if args.debug:
     #    # log segments
     #    print('HORIZONTAL segments')
@@ -295,14 +319,15 @@ def getRectangles(args, imgBW, imgdef):
     #        print(y)
     #        for x in lineSegmentsHorizontal[y]:
     #            print(x)
-        # print(lineSegmentsHorizontal)
+    #    print(lineSegmentsHorizontal)
     #    print('VERTICAL segments')
     #    for x in sorted(lineSegmentsVertical.keys()):
     #        print(x)
     #        for y in lineSegmentsVertical[x]:
     #            print(y)
+    # rectangles = findRectangles(lineSegmentsHorizontal, lineSegmentsVertical, corner_gap)
 
-    rectangles = findRectangles(lineSegmentsHorizontal, lineSegmentsVertical, corner_gap)
+    rectangles = findCVRectangles(args, imgBW, imgdef)
     rectangles = __purge_rectangles(args, rectangles)
     rectangles = __alignrects(args, rectangles)
     # for r in rectangles:
