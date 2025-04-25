@@ -75,7 +75,7 @@ def __getCountours(img, orig_img_path):
     # r = 0
     for c in contours:
         x, y, w, h = cv2.boundingRect(c)
-        if (w+h) > (5*csize):  # Filter for large rectangles
+        if (w+h) > (3*csize):  # Filter for large rectangles
             big_countours.append(c)
             # rectangle = ( (x, y), (x + w, y + h) )
             # rectangles.append(rectangle)
@@ -108,7 +108,7 @@ def __purge_rectangles(rectangles):
 
     return purged
 
-def __logRectangles(img, orig_img_path: Path, rectangles):
+def logRectangles(img, orig_img_path: Path, rectangles):
     reccolor = (0, 0, 255) # green
 
     image_copy = img[:, :, :3].copy()
@@ -179,7 +179,6 @@ def getRectangles(img, imgpath: Path, loglevel):
     rectangles.sort(key = lambda x: x[0][1]*100000+x[0][0])
     rectangles = __snap_rectangles(rectangles)
 
-    __logRectangles(img, imgpath, rectangles)
     log(LOG_LEVEL_INFO, f"Identified {len(rectangles)} rectangles.")
     return rectangles
 

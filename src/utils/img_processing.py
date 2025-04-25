@@ -71,6 +71,8 @@ def imgrectangles(img, imgdef, args):
     loglevel = urec.LOG_LEVEL_DEBUG if args.debug else urec.LOG_LEVEL_INFO if args.verbose else urec.LOG_LEVEL_WARNING
 
     rectangles = urec.getRectangles(img, ip, loglevel)
+    rectangles.append([[0,0],[img.shape[1], img.shape[0]]])
+    urec.logRectangles(img, ip, rectangles)
 
     # # convert to BW
     # imgBW = convertImage(img, imgdef, args)
@@ -445,6 +447,35 @@ def lines2image(args, lines, img, rectangles):
             img = cv2.circle(img, p0, circlesize, linecolor, -1)
     return img
 
+def __getXYpoint(r1, d1, r2, d2, border):
+    if   d1 == 'L':
+        x = r1[0][0]-border
+    elif d1 == 'R':
+        x = r1[1][0]+border
+    elif d1 == 'X':
+        x = (r1[0][0]+r1[1][0])//2
+    elif d1 == 'T':
+        y = r1[0][1]-border
+    elif d1 == 'B':
+        y = r1[1][1]+border
+    elif d1 == 'Y':
+        y = (r1[0][1]+r1[1][1])//2
+
+    if   d2 == 'L':
+        x = r2[0][0]-border
+    elif d2 == 'R':
+        x = r2[1][0]+border
+    elif d2 == 'X':
+        x = (r2[0][0]+r2[1][0])//2
+    elif d2 == 'T':
+        y = r2[0][1]-border
+    elif d2 == 'B':
+        y = r2[1][1]+border
+    elif d2 == 'Y':
+        y = (r2[0][1]+r2[1][1])//2
+
+    return x, y
+        
 def polygonpoints(args, polygon, rectangles, maxx, maxy):
     border = polygon['border']  if 'border' in polygon else 8
     if args.poster:
@@ -454,19 +485,10 @@ def polygonpoints(args, polygon, rectangles, maxx, maxy):
     for p in polygon['points']:
         if len(p) == 2:
             # by corner of rectangle
-            r = rectangles[p[0]-1]
-            istop = p[1][0] == 'T'
-            isleft = p[1][1] == 'L'
-            x = (r[0][0]-border) if isleft else (r[1][0]+border)
-            y = (r[0][1]-border) if istop  else (r[1][1]+border)
+            x, y = __getXYpoint(rectangles[p[0]-1], p[1][0], rectangles[p[0]-1], p[1][1], border)
         else:
             # by coordinates defined by rectangles
-            r = rectangles[p[0]-1]
-            isleft = p[1] == 'L'
-            x = (r[0][0]-border) if isleft else (r[1][0]+border)
-            r = rectangles[p[2]-1]
-            istop = p[3] == 'T'
-            y = (r[0][1]-border) if istop  else (r[1][1]+border)
+            x, y = __getXYpoint(rectangles[p[0]-1], p[1], rectangles[p[2]-1], p[3], border)
         if points:
             # prev = points[-1]
             for prev in points:
