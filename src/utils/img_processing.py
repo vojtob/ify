@@ -377,6 +377,33 @@ def icons2image(args, imgdef, imgPath, rectangles, img):
         print(icmd)
     subprocess.run(icmd, shell=False)
 
+def drawrect2image(args, rects2draw, img, rectangles):
+    log(LOG_LEVEL_DEBUG, f'drawrect2image {rects2draw=}')
+
+    if not isinstance(rects2draw, list):
+        rects2draw = [rects2draw]
+    for r in rects2draw:
+        log(LOG_LEVEL_DEBUG, f'drawrect2image {r=}')
+        points = rectpoints(args, r, rectangles, img.shape[1], img.shape[0])
+        linewidth = r['linewidth'] if ('linewidth' in r) else 2
+        linecolor = (r['linecolor'][2], r['linecolor'][1], r['linecolor'][0]) if 'linecolor' in r else (255,204,102)
+        fillcolor = (r['fillcolor'][2], r['fillcolor'][1], r['fillcolor'][0]) if 'fillcolor' in r else (255,204,102)
+        opacity   = r['opacity'] if 'opacity' in r else 80
+        if args.poster:
+            linewidth = int(linewidth * args.poster)
+        log(LOG_LEVEL_INFO, f'{linecolor=}, {linewidth=}, {fillcolor=}, {opacity=}')
+
+        points = np.array([[p[0],p[1]] for p in points], np.int32)
+        points = points.reshape((-1,1,2))
+        log(LOG_LEVEL_ALL, points)
+
+        # draw polygon
+        # img = cv2.polylines(img, [points], True, linecolor, linewidth)
+        img = cv2.fillPoly(img, [points], color=fillcolor) # to co chcem zvyraznit je vsade na 255, 
+
+    return img
+
+
 def lines2image(args, lines, img, rectangles):
     for line in lines:
         linepoints = line['points']
@@ -509,16 +536,12 @@ def rectpoints(args, rectarea, rectangles, maxx, maxy):
         border = int(border * args.poster)
     points = []
     sr = rectarea['corners']
-    r = rectangles[sr[0]-1]
-    x1 = r[0][0]-border
-    y1 = r[0][1]-border
-    x2 = r[1][0]+border
-    y2 = r[1][1]+border
-    r = rectangles[sr[1]-1]
-    x1 = min(x1, r[0][0]-border)
-    y1 = min(y1, r[0][1]-border)
-    x2 = max(x2, r[1][0]+border)
-    y2 = max(y2, r[1][1]+border)
+    r1 = rectangles[sr[0]-1]
+    r2 = rectangles[sr[1]-1]
+    x1 = min(r1[0][0]-border, r2[0][0]-border)
+    y1 = min(r1[0][1]-border, r2[0][1]-border)
+    x2 = max(r1[1][0]+border, r2[1][0]+border)
+    y2 = max(r1[1][1]+border, r2[1][1]+border)
     x1 = max(0, min(x1, maxx))
     x2 = max(0, min(x2, maxx))
     y1 = max(0, min(y1, maxy))
@@ -584,6 +607,8 @@ def areas2image(args, imgdef, img, rectangles):
 
     if 'lines' in imgdef:
         img = lines2image(args, imgdef['lines'], img, rectangles)
+    if 'rect-insert' in imgdef:
+        img = drawrect2image(args, imgdef['rect-insert'], img, rectangles)
     # img[:, :, 3] = np.full((img.shape[0], img.shape[1]), 255, np.uint8)
     for name, r in imgdef.items():
         if name == 'polygon':

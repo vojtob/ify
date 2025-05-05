@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     if args.command=='clean':
         log(args, 'start cleaning')
-        for dirname in [args.alldir, args.iconsdir, args.areasdir, args.recdir, args.bwdir]:
+        for dirname in [args.alldir, args.iconsdir, args.areasdir, args.recdir, args.bwdir, args.xxdir]:
             p = args.projectdir / dirname
             if p.exists():
                 shutil.rmtree(p)
