@@ -384,7 +384,7 @@ def drawrect2image(args, rects2draw, img, rectangles):
         rects2draw = [rects2draw]
     for r in rects2draw:
         log(LOG_LEVEL_DEBUG, f'drawrect2image {r=}')
-        points = rectpoints(args, r, rectangles, img.shape[1], img.shape[0])
+        points = rectpoints(args, r, rectangles, img.shape[1], img.shape[0]) if 'corners' in r else polygonpoints(args, r, rectangles, img.shape[1], img.shape[0])
         linewidth = r['linewidth'] if ('linewidth' in r) else 2
         linecolor = (r['linecolor'][2], r['linecolor'][1], r['linecolor'][0]) if 'linecolor' in r else (255,204,102)
         fillcolor = (r['fillcolor'][2], r['fillcolor'][1], r['fillcolor'][0]) if 'fillcolor' in r else (255,204,102)
